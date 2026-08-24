@@ -13,24 +13,24 @@
         "types:check": "vue-tsc --noEmit"
     },
     "devDependencies": {
-        "@inertiajs/vite": "^3.6.1",
+        "@inertiajs/vite": "^3.7.0",
         "@laravel/vite-plugin-wayfinder": "^0.1.7",
         "@tailwindcss/vite": "^4.3.3",
         "@types/node": "^26.2.0",
         "@vitejs/plugin-vue": "^6.0.8",
-        "concurrently": "^10.0.4",
-        "oxlint": "^1.78.0",
+        "concurrently": "^10.0.5",
+        "oxlint": "^1.79.0",
         "playwright": "^1.62.1",
         "prettier": "^3.9.6",
         "prettier-plugin-organize-imports": "^4.3.0",
         "prettier-plugin-tailwindcss": "^0.8.1",
         "typescript": "^6.0.3",
-        "vite": "^8.2.1",
-        "vue-tsc": "^3.3.9"
+        "vite": "^8.2.2",
+        "vue-tsc": "^3.3.10"
     },
     "dependencies": {
-        "@inertiajs/vue3": "^3.6.1",
-        "@lucide/vue": "^1.31.0",
+        "@inertiajs/vue3": "^3.7.0",
+        "@lucide/vue": "^1.33.0",
         "@vueuse/core": "^14.4.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -43,8 +43,8 @@
         "vue-input-otp": "^0.4.0"
     },
     "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "^4.62.4",
-        "@rollup/rollup-win32-x64-msvc": "^4.62.4",
+        "@rollup/rollup-linux-x64-gnu": "^4.62.5",
+        "@rollup/rollup-win32-x64-msvc": "^4.62.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.3.3",
         "@tailwindcss/oxide-win32-x64-msvc": "^4.3.3",
         "lightningcss-linux-x64-gnu": "^1.33.0",

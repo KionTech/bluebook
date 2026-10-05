@@ -11,7 +11,6 @@ use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\CodeQuality\Rector\Identical\SimplifyConditionsRector;
 use Rector\CodeQuality\Rector\Identical\StrlenZeroToIdenticalEmptyStringRector;
 use Rector\CodeQuality\Rector\NullsafeMethodCall\CleanupUnneededNullsafeOperatorRector;
-use Rector\CodeQuality\Rector\Ternary\SwitchNegatedTernaryRector;
 use Rector\CodeQuality\Rector\Ternary\UnnecessaryTernaryExpressionRector;
 use Rector\CodingStyle\Rector\String_\SimplifyQuoteEscapeRector;
 use Rector\Config\RectorConfig;
@@ -35,7 +34,6 @@ return RectorConfig::configure()
             SimplifyEmptyCheckOnEmptyArrayRector::class,
             SimplifyUselessVariableRector::class,
             StrlenZeroToIdenticalEmptyStringRector::class,
-            SwitchNegatedTernaryRector::class,
             TernaryFalseExpressionToIfRector::class,
             TernaryToNullCoalescingRector::class,
             ThrowWithPreviousExceptionRector::class,

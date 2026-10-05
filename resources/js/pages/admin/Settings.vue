@@ -40,7 +40,7 @@ import AdminLayout from '@/layouts/admin/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { Mail, RefreshCw } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
@@ -79,7 +79,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // A clock that ticks every second so the relative times stay live.
-const now = useNow({ interval: 1000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 1000) });
 
 const lastRefreshed = computed(() =>
     dateWithAgo(props.source?.last_synced_at, now.value.getTime()),

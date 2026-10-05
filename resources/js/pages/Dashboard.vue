@@ -34,7 +34,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router, usePage, usePoll } from '@inertiajs/vue3';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { KeyRound, Lock, Plus, RefreshCw, Search, Star } from '@lucide/vue';
 import { computed, ref } from 'vue';
 
@@ -105,7 +105,7 @@ const page = usePage();
 const syncScopesUrl = computed(() => page.props.auth.sync_scopes_url);
 
 // A clock that ticks every second so the relative times stay live.
-const now = useNow({ interval: 1000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 1000) });
 
 const lastRefreshed = computed(() =>
     dateWithAgo(props.source?.last_synced_at, now.value.getTime()),

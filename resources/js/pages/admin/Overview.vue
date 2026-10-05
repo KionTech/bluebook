@@ -18,7 +18,7 @@ import AdminLayout from '@/layouts/admin/Layout.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, usePoll } from '@inertiajs/vue3';
-import { useNow } from '@vueuse/core';
+import { useIntervalFn, useNow } from '@vueuse/core';
 import { ArrowRight } from '@lucide/vue';
 import { computed } from 'vue';
 
@@ -67,7 +67,7 @@ usePoll(30000);
 const { getInitials } = useInitials();
 
 // A clock that ticks every second so the relative times stay live.
-const now = useNow({ interval: 1000 });
+const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 1000) });
 
 const lastRefreshed = computed(() =>
     dateWithAgo(props.source?.last_synced_at, now.value.getTime()),

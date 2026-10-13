@@ -75,10 +75,12 @@ test('the health page answers', async ({ request }) => {
   expect(await response.text()).toContain('Application up');
 });
 
-test('a trailing slash redirects to the page without it', async ({ request }) => {
+test('a trailing slash redirects to the page without it', async ({ request, baseURL }) => {
   const response = await request.get('/dashboard/', { maxRedirects: 0 });
   expect(response.status()).toBe(308);
-  expect(response.headers().location).toBe('/dashboard');
+  // SvelteKit's Location is relative to the URL with the slash.
+  const target = new URL(response.headers().location, new URL('/dashboard/', baseURL));
+  expect(target.pathname).toBe('/dashboard');
 });
 
 test('a stale Inertia tab reloads the page', async ({ request, baseURL }) => {

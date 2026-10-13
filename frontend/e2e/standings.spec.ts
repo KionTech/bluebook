@@ -50,7 +50,7 @@ test('shows the standings hub with the user characters', async ({ page, context,
   await page.goto('/dashboard');
 
   await expect(page.getByText('Current standings')).toBeVisible();
-  await expect(page.getByText('Your characters')).toBeVisible();
+  await expect(page.getByText('Your characters', { exact: true })).toBeVisible();
   await expect(page.getByText('Test Pilot').first()).toBeVisible();
   noErrors();
 });
@@ -250,7 +250,7 @@ test('does not offer a request for a character that inherits the source', async 
   const noErrors = watchForErrors(page);
 
   await page.goto('/dashboard');
-  await expect(page.getByText('Your characters')).toBeVisible();
+  await expect(page.getByText('Your characters', { exact: true })).toBeVisible();
 
   await expect(page.getByText('Request standing')).toHaveCount(0);
   noErrors();

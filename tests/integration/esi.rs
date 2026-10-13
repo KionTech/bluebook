@@ -1,5 +1,5 @@
-//! ESI as `nicolaskion/eve` called it: the headers, the retries on a
-//! server error (reads only), and what each failure does to the token.
+//! The ESI client: the headers, the retries on a server error (reads
+//! only), and what each failure does to the token.
 
 use serde_json::json;
 
@@ -33,7 +33,6 @@ fn server_errors(count: usize) -> Vec<Canned> {
         .collect()
 }
 
-/// FIXES.md, "The ESI user agent names the site".
 #[tokio::test]
 async fn requests_carry_the_user_agent_and_compatibility_date() {
     let mut app = TestApp::new().await;
@@ -117,7 +116,6 @@ async fn contact_writes_are_never_tried_again() {
     assert_eq!(app.esi.requests().len(), 1);
 }
 
-/// FIXES.md, "Tokens were thrown away on any failure".
 #[tokio::test]
 async fn a_forbidden_answer_keeps_the_token_and_marks_the_source_unreadable() {
     let mut app = TestApp::new().await;
@@ -207,7 +205,6 @@ async fn an_unauthorized_answer_refreshes_the_token_and_tries_again() {
     assert_eq!(app.count("esi_tokens").await, 1);
 }
 
-/// FIXES.md, "Tokens were thrown away on any failure".
 #[tokio::test]
 async fn an_unauthorized_answer_right_after_a_refresh_deletes_the_token() {
     let mut app = TestApp::new().await;

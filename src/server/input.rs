@@ -1,6 +1,5 @@
 //! A form's fields: the JSON object the pages send (or a urlencoded form),
-//! read the way Laravel's request input and its `ConvertEmptyStringsToNull`
-//! middleware saw them: an empty string is null.
+//! where an empty string is null.
 
 use axum::body::Bytes;
 use axum::extract::{FromRequest, Request};
@@ -61,8 +60,8 @@ impl<S: Send + Sync> FromRequest<S> for Input {
     }
 }
 
-/// Laravel's `boolean` rule: true, false, 1, 0, "1", "0" (and "true",
-/// "false" as strings are refused, like Laravel).
+/// A boolean field: true, false, 1, 0, "1" or "0"; "true" and "false" as
+/// strings are refused.
 pub fn as_boolean(value: &Value) -> Option<bool> {
     match value {
         Value::Bool(flag) => Some(*flag),
@@ -80,8 +79,8 @@ pub fn as_boolean(value: &Value) -> Option<bool> {
     }
 }
 
-/// The query string of a request as Laravel's `$request->query()`: the
-/// parameters in order, the last of a repeated name winning.
+/// The query string of a request: the parameters in order, the last of a
+/// repeated name winning.
 pub fn query_pairs(query: Option<&str>) -> Vec<(String, String)> {
     let mut pairs: Vec<(String, String)> = Vec::new();
     for (key, value) in form_urlencoded::parse(query.unwrap_or_default().as_bytes()) {
@@ -117,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn reads_booleans_like_laravel() {
+    fn reads_booleans() {
         assert_eq!(as_boolean(&json!(true)), Some(true));
         assert_eq!(as_boolean(&json!(0)), Some(false));
         assert_eq!(as_boolean(&json!("1")), Some(true));

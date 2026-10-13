@@ -1,5 +1,5 @@
-//! tests/Feature/Console/CheckSyncTokensTest.php: the daily mail to
-//! synced characters whose write token lapsed, and the mail itself.
+//! The daily mail to synced characters whose write token lapsed, and the
+//! mail itself.
 
 use serde_json::json;
 
@@ -11,7 +11,7 @@ use crate::common::{
     assert_json_eq,
 };
 
-/// `tokenCheckSetup()`: a corporation source whose sender can read it and
+/// A corporation source whose sender can read it and
 /// send mail.
 async fn setup(app: &mut TestApp) -> i64 {
     app.corporation(2000, Some("Source Corp"), None, None).await;
@@ -165,7 +165,6 @@ async fn sends_an_eve_mail_from_the_source_character_to_the_lapsed_character() {
     );
 }
 
-/// FIXES.md, "Removed characters were mailed about lapsed tokens forever".
 #[tokio::test]
 async fn does_not_mail_characters_without_an_account() {
     let mut app = TestApp::new().await;
@@ -185,7 +184,7 @@ async fn does_not_mail_characters_without_an_account() {
 
 /// A token that keeps failing for three days (EVE unreachable, refreshes
 /// answering server errors) is kept, but its character is told as if it
-/// lapsed. FIXES.md, "Tokens were thrown away on any failure".
+/// lapsed.
 #[tokio::test]
 async fn mails_characters_whose_write_token_has_failed_for_three_days() {
     let mut app = TestApp::new().await;

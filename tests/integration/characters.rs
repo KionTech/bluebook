@@ -1,13 +1,10 @@
-//! The pilot's character forms: tests/Feature/MainCharacterTest.php,
-//! tests/Feature/Standings/CharacterSyncToggleTest.php and
-//! tests/Feature/UserCharacterTest.php.
+//! The pilot's character forms: the main character, the sync switch,
+//! switching and removing characters.
 
 use serde_json::json;
 
 use crate::common::factories::{NewCharacter, Owner};
 use crate::common::{APP_URL, Browser, TestApp, WRITE_CHARACTER_CONTACTS, assert_json_eq};
-
-// MainCharacterTest.php
 
 #[tokio::test]
 async fn users_can_set_their_main_character() {
@@ -94,8 +91,6 @@ async fn the_dashboard_marks_the_main_character() {
             .any(|character| character["id"] == main && character["is_main"] == true)
     );
 }
-
-// CharacterSyncToggleTest.php
 
 #[tokio::test]
 async fn lets_a_user_re_sync_only_their_own_opted_in_characters() {
@@ -199,16 +194,13 @@ async fn requires_authentication_to_toggle_syncing() {
         )
         .await;
 
-    // Laravel redirected to the login; the form answers 401 with it
-    // (FIXES.md, "Cross-site forms are refused without a CSRF token").
+    // A guest's form answers 401 with the login.
     response.assert_status(401);
     assert_json_eq(
         &json!({ "message": "Unauthenticated.", "redirect": "/eve" }),
         &response.json(),
     );
 }
-
-// UserCharacterTest.php
 
 #[tokio::test]
 async fn users_can_switch_their_active_character() {
@@ -310,8 +302,6 @@ async fn active_character_switches_to_remaining_character_after_removal() {
 
 // New.
 
-/// FIXES.md, "Removed characters were mailed about lapsed tokens
-/// forever".
 #[tokio::test]
 async fn removing_a_character_turns_its_sync_off() {
     let app = TestApp::new().await;

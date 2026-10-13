@@ -1,6 +1,6 @@
-//! The factories the PHP tests used (database/factories), writing rows
-//! straight to the test database. Ids and names come from a counter, so
-//! runs are repeatable; tests that depend on a name or id pass their own.
+//! Factories that write rows straight to the test database. Ids and names
+//! come from a counter, so runs are repeatable; tests that depend on a
+//! name or id pass their own.
 
 use std::sync::atomic::{AtomicI64, Ordering};
 
@@ -15,8 +15,7 @@ fn next() -> i64 {
     SEQUENCE.fetch_add(1, Ordering::Relaxed)
 }
 
-/// Who owns a new character: like `Character::factory()`, a new user
-/// unless the test says otherwise.
+/// Who owns a new character: a new user unless the test says otherwise.
 #[derive(Debug, Clone, Copy, Default)]
 pub enum Owner {
     #[default]
@@ -25,7 +24,7 @@ pub enum Owner {
     Nobody,
 }
 
-/// `Character::factory()->create([...])`.
+/// A character to create; unset fields get defaults.
 #[derive(Debug, Clone, Default)]
 pub struct NewCharacter<'a> {
     pub id: Option<i64>,
@@ -36,7 +35,7 @@ pub struct NewCharacter<'a> {
     pub should_sync: bool,
 }
 
-/// `StandingRequest::factory()->create([...])`.
+/// A standing request to create; unset fields get defaults.
 #[derive(Debug, Clone, Default)]
 pub struct NewRequest<'a> {
     /// `character` unless given.
@@ -51,12 +50,12 @@ pub struct NewRequest<'a> {
 }
 
 impl TestApp {
-    /// `User::factory()->create()`: set up already.
+    /// A user who has been through the setup.
     pub async fn user(&self) -> i64 {
         self.user_named(&format!("User {}", next()), true).await
     }
 
-    /// `User::factory()->withoutSetup()->create()`.
+    /// A user who has not been through the setup.
     pub async fn user_without_setup(&self) -> i64 {
         self.user_named(&format!("User {}", next()), false).await
     }
@@ -106,7 +105,7 @@ impl TestApp {
         id
     }
 
-    /// `Character::factory()->for($user)->create()`.
+    /// A character on the user's account.
     pub async fn character_of(&self, user_id: i64) -> i64 {
         self.character(NewCharacter {
             owner: Owner::User(user_id),
@@ -237,7 +236,7 @@ impl TestApp {
         .expect("a source");
     }
 
-    /// `SourceContact::factory()->create([...])`.
+    /// A contact of the source.
     pub async fn source_contact(&self, contact_id: i64, contact_type: &str, standing: f64) {
         let now = self.clock.now();
         sqlx::query(
@@ -253,8 +252,7 @@ impl TestApp {
         .expect("a source contact");
     }
 
-    /// `SourceContact::factory()->create()` with the factory's random
-    /// type and standing.
+    /// A contact of the source with any type and standing.
     pub async fn any_source_contact(&self) -> i64 {
         let number = next();
         let types = ["character", "corporation", "alliance", "faction"];
@@ -269,7 +267,7 @@ impl TestApp {
         id
     }
 
-    /// `CharacterSyncedContact::factory()->for($character)->create([...])`.
+    /// A ledger row: a contact the sync wrote to the character.
     pub async fn synced_contact(&self, character_id: i64, contact_id: i64, standing: f64) {
         let now = self.clock.now();
         sqlx::query(

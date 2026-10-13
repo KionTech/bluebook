@@ -1,6 +1,6 @@
-//! tests/Feature/ScheduleTest.php: the three scheduled tasks and their
-//! cadence; and their alignment on wall clock boundaries, EVE's downtime
-//! window and the switch that turns the schedule on.
+//! The three scheduled tasks and their cadence, their alignment on wall
+//! clock boundaries, EVE's downtime window and the switch that turns the
+//! schedule on.
 
 use time::macros::datetime;
 
@@ -74,7 +74,6 @@ fn the_downtime_window_includes_its_start_and_excludes_its_end() {
     assert!(!is_active(datetime!(2026-06-25 11:15:00 UTC)));
 }
 
-/// FIXES.md, "The schedule is off unless switched on".
 #[tokio::test]
 async fn the_schedule_is_off_unless_enabled() {
     let app = crate::common::TestApp::new().await;

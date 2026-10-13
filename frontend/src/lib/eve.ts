@@ -5,11 +5,11 @@
  */
 export function eveImage(type: string, id: number, size = 64): string | null {
   switch (type) {
-    case "character":
+    case 'character':
       return `https://images.evetech.net/characters/${id}/portrait?size=${size}`;
-    case "corporation":
+    case 'corporation':
       return `https://images.evetech.net/corporations/${id}/logo?size=${size}`;
-    case "alliance":
+    case 'alliance':
       return `https://images.evetech.net/alliances/${id}/logo?size=${size}`;
     default:
       return null;
@@ -36,18 +36,18 @@ export function standingLabel(standing: number): string {
  */
 export function standingTextClass(standing: number): string {
   if (standing >= 5) {
-    return "text-standing-excellent";
+    return 'text-standing-excellent';
   }
   if (standing > 0) {
-    return "text-standing-good";
+    return 'text-standing-good';
   }
   if (standing === 0) {
-    return "text-standing-neutral";
+    return 'text-standing-neutral';
   }
   if (standing > -5) {
-    return "text-standing-bad";
+    return 'text-standing-bad';
   }
-  return "text-standing-terrible";
+  return 'text-standing-terrible';
 }
 
 type EffectiveStanding = { value: number; source: string };
@@ -56,23 +56,17 @@ type EffectiveStanding = { value: number; source: string };
  * Text colour for an effective standing; entities covered by the standings
  * source itself render green, like own corp/alliance in game.
  */
-export function effectiveStandingTextClass(
-  standing: EffectiveStanding,
-): string {
-  return standing.source === "source"
-    ? "text-standing-own"
-    : standingTextClass(standing.value);
+export function effectiveStandingTextClass(standing: EffectiveStanding): string {
+  return standing.source === 'source' ? 'text-standing-own' : standingTextClass(standing.value);
 }
 
 /**
  * Chip classes for an effective standing; source-covered entities render
  * green, like own corp/alliance in game.
  */
-export function effectiveStandingChipClass(
-  standing: EffectiveStanding,
-): string {
-  return standing.source === "source"
-    ? "bg-standing-own/12 text-standing-own"
+export function effectiveStandingChipClass(standing: EffectiveStanding): string {
+  return standing.source === 'source'
+    ? 'bg-standing-own/12 text-standing-own'
     : standingChipClass(standing.value);
 }
 
@@ -82,16 +76,16 @@ export function effectiveStandingChipClass(
  */
 export function standingChipClass(standing: number): string {
   if (standing >= 5) {
-    return "bg-standing-excellent/12 text-standing-excellent";
+    return 'bg-standing-excellent/12 text-standing-excellent';
   }
   if (standing > 0) {
-    return "bg-standing-good/12 text-standing-good";
+    return 'bg-standing-good/12 text-standing-good';
   }
   if (standing === 0) {
-    return "bg-standing-neutral/12 text-standing-neutral";
+    return 'bg-standing-neutral/12 text-standing-neutral';
   }
   if (standing > -5) {
-    return "bg-standing-bad/12 text-standing-bad";
+    return 'bg-standing-bad/12 text-standing-bad';
   }
-  return "bg-standing-terrible/12 text-standing-terrible";
+  return 'bg-standing-terrible/12 text-standing-terrible';
 }

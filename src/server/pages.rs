@@ -1,5 +1,4 @@
-//! The props of the SvelteKit pages, the Inertia props of the Laravel
-//! pages (`/api/pages/*`): the shared props of `HandleInertiaRequests`
+//! The props of the SvelteKit pages (`/api/pages/*`): the shared props
 //! (`name`, `auth`, `sidebarOpen`, `flash`) merged with each page's own.
 
 use axum::Json;

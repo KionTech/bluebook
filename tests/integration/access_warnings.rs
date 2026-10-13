@@ -1,6 +1,5 @@
-//! tests/Feature/AccessWarningsTest.php: the banners for characters that
-//! need a new token and for an unreadable source, from the shared `auth`
-//! props.
+//! The banners for characters that need a new token and for an
+//! unreadable source, from the shared `auth` props.
 
 use serde_json::json;
 
@@ -88,7 +87,6 @@ async fn does_not_flag_the_source_for_non_admins() {
     assert_eq!(props.json()["auth"]["source_unreadable"], false);
 }
 
-/// FIXES.md, "Tokens were thrown away on any failure".
 #[tokio::test]
 async fn flags_a_character_whose_write_token_has_failed_for_three_days() {
     let app = TestApp::new().await;

@@ -1,5 +1,4 @@
-//! tests/Feature/Admin/StandingsSourceTest.php: picking the standings
-//! source and the admin's "Sync now".
+//! Picking the standings source and the admin's "Sync now".
 
 use serde_json::json;
 
@@ -8,7 +7,7 @@ use crate::common::{
     Browser, READ_CORPORATION_CONTACTS, TestApp, WRITE_CHARACTER_CONTACTS, assert_json_eq,
 };
 
-/// `adminUser()`: the admin character in corporation 2000 and alliance
+/// The admin character in corporation 2000 and alliance
 /// 3000.
 async fn admin(app: &mut TestApp) -> (i64, i64, Browser) {
     let user = app.user().await;
@@ -178,8 +177,6 @@ async fn queues_a_sync_for_opted_in_characters_when_the_admin_clicks_sync_now() 
     );
 }
 
-/// FIXES.md, ""Sync now" said the sync started when the source could not
-/// be read".
 #[tokio::test]
 async fn sync_now_reports_an_unreadable_source() {
     let mut app = TestApp::new().await;
@@ -204,8 +201,6 @@ async fn sync_now_reports_an_unreadable_source() {
     );
 }
 
-/// FIXES.md, "The source came from the active character, not an admin
-/// character".
 #[tokio::test]
 async fn uses_an_admin_character_while_an_alt_is_active() {
     let mut app = TestApp::new().await;

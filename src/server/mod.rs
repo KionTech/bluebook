@@ -21,7 +21,7 @@ use axum::Router;
 use axum::extract::Request;
 use axum::http::{HeaderMap, Method, StatusCode, header};
 use axum::middleware::Next;
-use axum::response::{IntoResponse, Response};
+use axum::response::Response;
 use axum::routing::{any, get, post, put};
 use sqlx::PgPool;
 use tokio::sync::Notify;
@@ -111,8 +111,8 @@ fn routes(state: AppState) -> Router {
             put(admin::resolve_request),
         )
         .route("/admin/discord-settings", put(admin::update_discord))
-        // The local disk's routes; nothing is stored there, so every
-        // signature is invalid, as Laravel answered.
+        // Signed file links; nothing is stored, so every signature is
+        // invalid.
         .route("/storage/{*path}", get(storage).put(storage))
         // The pages are SvelteKit's; any other method is not allowed.
         .route("/", get(page_elsewhere))
@@ -129,10 +129,6 @@ fn routes(state: AppState) -> Router {
             viewer::resolve,
         ))
         .layer(axum::middleware::from_fn(reject_cross_site_mutations))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            reload_inertia_requests,
-        ))
         .with_state(state)
 }
 
@@ -165,53 +161,9 @@ async fn page_elsewhere(uri: axum::http::Uri) -> Response {
     errors::not_found(uri).await
 }
 
-/// Tabs left open on the Laravel site still send Inertia's XHR
-/// (`X-Inertia: true`). A 409 with `X-Inertia-Location` makes Inertia load
-/// that URL in full: the same page for a GET, the page a form was on for
-/// anything else (its Referer, or the home page).
-async fn reload_inertia_requests(
-    axum::extract::State(state): axum::extract::State<AppState>,
-    request: Request,
-    next: Next,
-) -> Response {
-    if !request.headers().contains_key("x-inertia") {
-        return next.run(request).await;
-    }
-    let headers = request.headers();
-    let location = if matches!(*request.method(), Method::GET | Method::HEAD) {
-        let scheme = headers
-            .get("x-forwarded-proto")
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_else(|| state.config.app_url.split("://").next().unwrap_or("https"));
-        let host = headers
-            .get("x-forwarded-host")
-            .or_else(|| headers.get(header::HOST))
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default();
-        let path = request
-            .uri()
-            .path_and_query()
-            .map_or("/", |path| path.as_str());
-        format!("{scheme}://{host}{path}")
-    } else {
-        headers
-            .get(header::REFERER)
-            .and_then(|value| value.to_str().ok())
-            .filter(|referer| !is_cross_site_url(referer, headers))
-            .map_or_else(|| format!("{}/", state.config.app_url), str::to_owned)
-    };
-    let mut response = StatusCode::CONFLICT.into_response();
-    if let Ok(location) = location.parse() {
-        response
-            .headers_mut()
-            .insert("x-inertia-location", location);
-    }
-    response
-}
-
-/// The same-origin check that replaces Laravel's CSRF token: a mutation
-/// the browser marks as coming from another site, or whose `Origin` is not
-/// this host, is refused with Laravel's 419. Requests without either
+/// The same-origin check in place of a CSRF token: a mutation the browser
+/// marks as coming from another site, or whose `Origin` is not this host,
+/// is refused with a 419. Requests without either
 /// header (non-browser clients) cannot be forged by a third-party page and
 /// pass. The session cookie is `SameSite=Lax` on top.
 async fn reject_cross_site_mutations(request: Request, next: Next) -> Response {

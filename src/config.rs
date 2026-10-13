@@ -37,11 +37,10 @@ pub struct Config {
 pub struct EveConfig {
     /// `SSO_BASE_URL`.
     pub sso_base_url: String,
-    /// `EVE_CLIENT_ID` and `EVE_CLIENT_SECRET` (or the Laravel names
-    /// `EVEONLINE_CLIENT_ID` and `EVEONLINE_CLIENT_SECRET`).
+    /// `EVE_CLIENT_ID` and `EVE_CLIENT_SECRET`.
     pub client_id: String,
     pub client_secret: String,
-    /// `EVE_CALLBACK_URL` (or `EVEONLINE_REDIRECT_URI`): the callback
+    /// `EVE_CALLBACK_URL`: the callback
     /// registered with CCP.
     pub callback_url: String,
     /// The pause between tries of a token refresh that EVE answered with
@@ -84,8 +83,7 @@ pub const DEFAULT_DEMO_CHARACTER_ID: i64 = 2_100_000_001;
 pub const ESI_RETRY_DELAY: Duration = Duration::from_secs(5);
 pub const REFRESH_RETRY_DELAY: Duration = Duration::from_secs(1);
 
-/// A variable that is set and not empty (`null`, as Laravel's .env files
-/// write it, counts as unset).
+/// A variable that is set and not empty (`null` counts as unset).
 fn env(key: &str) -> Option<String> {
     std::env::var(key)
         .ok()
@@ -138,14 +136,9 @@ impl Config {
                 sso_base_url: env_or("SSO_BASE_URL", DEFAULT_SSO_BASE_URL)
                     .trim_end_matches('/')
                     .to_owned(),
-                client_id: env("EVE_CLIENT_ID")
-                    .or_else(|| env("EVEONLINE_CLIENT_ID"))
-                    .unwrap_or_default(),
-                client_secret: env("EVE_CLIENT_SECRET")
-                    .or_else(|| env("EVEONLINE_CLIENT_SECRET"))
-                    .unwrap_or_default(),
+                client_id: env("EVE_CLIENT_ID").unwrap_or_default(),
+                client_secret: env("EVE_CLIENT_SECRET").unwrap_or_default(),
                 callback_url: env("EVE_CALLBACK_URL")
-                    .or_else(|| env("EVEONLINE_REDIRECT_URI"))
                     .unwrap_or_else(|| DEFAULT_CALLBACK_URL.to_owned()),
                 refresh_retry_delay: REFRESH_RETRY_DELAY,
             },
@@ -193,7 +186,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn reads_the_admin_list_like_the_laravel_config() {
+    fn reads_the_admin_list() {
         assert_eq!(parse_admin_ids(""), Vec::<i64>::new());
         assert_eq!(parse_admin_ids("123"), vec![123]);
         assert_eq!(parse_admin_ids(" 1, 2 ,3,"), vec![1, 2, 3]);

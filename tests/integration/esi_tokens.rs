@@ -102,7 +102,6 @@ async fn a_refresh_answered_with_invalid_grant_deletes_the_token() {
     assert_eq!(app.count("esi_tokens").await, 0);
 }
 
-/// FIXES.md, "Tokens were thrown away on any failure".
 #[tokio::test]
 async fn a_refresh_failing_five_times_keeps_the_token() {
     let mut app = TestApp::new().await;
@@ -180,8 +179,6 @@ async fn a_refresh_that_works_again_clears_the_failure_mark() {
     );
 }
 
-/// FIXES.md, "A failed token refresh still sent the request with the dead
-/// token".
 #[tokio::test]
 async fn a_failed_refresh_sends_no_request() {
     let mut app = TestApp::new().await;

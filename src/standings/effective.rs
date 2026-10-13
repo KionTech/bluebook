@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
-use crate::format::php_float;
+use crate::format::standing_value;
 use crate::standings::{Contact, Source, contacts, key};
 
 pub struct Resolver {
@@ -59,7 +59,7 @@ impl Resolver {
             let Some(id) = id else { continue };
             if let Some(contact) = self.contacts.get(&key(kind, id)) {
                 return json!({
-                    "standing": php_float(contact.standing),
+                    "standing": standing_value(contact.standing),
                     "source": source,
                     "via_type": kind,
                     "via_id": id,
@@ -83,7 +83,7 @@ impl Resolver {
             .as_ref()
             .is_some_and(|source| source.covers(corporation_id, alliance_id))
         {
-            return json!({ "value": php_float(10.0), "source": "source" });
+            return json!({ "value": standing_value(10.0), "source": "source" });
         }
         self.first(&[
             ("character", Some(id)),
@@ -103,7 +103,7 @@ impl Resolver {
             }
         });
         if covered {
-            return json!({ "value": php_float(10.0), "source": "source" });
+            return json!({ "value": standing_value(10.0), "source": "source" });
         }
         if kind == "corporation" {
             self.first(&[("corporation", Some(id)), ("alliance", alliance_id)])
@@ -116,7 +116,7 @@ impl Resolver {
         for (kind, id) in chain {
             let Some(id) = id else { continue };
             if let Some(contact) = self.contacts.get(&key(kind, *id)) {
-                return json!({ "value": php_float(contact.standing), "source": kind });
+                return json!({ "value": standing_value(contact.standing), "source": kind });
             }
         }
         Value::Null

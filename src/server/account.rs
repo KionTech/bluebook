@@ -1,6 +1,6 @@
 //! The signed-in user of a request with its characters, the active
-//! character in the session, and the gates of the pages and forms
-//! (`auth`, `can:standings.admin`, `CharacterPolicy`).
+//! character in the session, and the gates of the pages and forms (signed
+//! in, admin, own character).
 
 use axum::http::StatusCode;
 use axum::response::Response;
@@ -13,8 +13,7 @@ use super::errors;
 use super::viewer::{self, Viewer};
 use crate::auth::session;
 
-/// A corporation or alliance as the characters carry it
-/// (`EntitySummaryResource`).
+/// A corporation or alliance as the characters carry it.
 #[derive(Debug, Clone)]
 pub struct Summary {
     pub id: i64,
@@ -87,7 +86,7 @@ impl Character {
             alliance_id,
             user_id,
             should_sync,
-            // Only an entity stored locally, as Eloquent loaded it.
+            // Only an entity that is stored locally.
             corporation: co_id.map(|id| Summary {
                 id,
                 name: co_name,
@@ -101,7 +100,7 @@ impl Character {
         }
     }
 
-    /// `CharacterResource` with its relations loaded.
+    /// The character with its corporation and alliance.
     pub fn json(&self) -> Value {
         json!({
             "id": self.id,
@@ -183,9 +182,9 @@ impl Account {
             .any(|character| character.id == character_id)
     }
 
-    /// `getActiveCharacter()`: the session's character when it is still on
-    /// the account, else the first (now stored in the session). Without
-    /// characters the user is signed out with Laravel's 403.
+    /// The session's character when it is still on the account, else the
+    /// first (now stored in the session). Without characters the user is
+    /// signed out with a 403.
     pub async fn active_character(&self, state: &AppState) -> Result<Character, Response> {
         if let Some(character) = self
             .session_character
@@ -248,7 +247,7 @@ pub async fn form_account(state: &AppState, viewer: &Viewer) -> Result<Account, 
         .ok_or_else(answer::unauthenticated)
 }
 
-/// `can:standings.admin`.
+/// The admin gate.
 pub fn require_admin(state: &AppState, account: &Account) -> Result<(), Response> {
     if account.is_admin(state) {
         Ok(())
@@ -257,8 +256,8 @@ pub fn require_admin(state: &AppState, account: &Account) -> Result<(), Response
     }
 }
 
-/// Route model binding of `{character}`: an id that names no character is
-/// not found; `CharacterPolicy`: one of another account is forbidden.
+/// `{character}` in a path: an id that names no character is not found,
+/// one of another account is forbidden.
 pub async fn owned_character(
     state: &AppState,
     account: &Account,

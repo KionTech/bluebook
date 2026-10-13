@@ -1,15 +1,13 @@
-//! Sign-ins: a random token in the `bluebook-session` cookie (Laravel's
-//! cookie name; HttpOnly, SameSite=Lax, Secure on HTTPS), stored as its
-//! SHA-256 in `sessions`, good for `SESSION_LIFETIME_DAYS` from the
-//! login. Laravel's logins were always "remembered", so a sign-in lasted
-//! as long as its 400 day remember cookie; the session does the same on
-//! its own. A guest gets a session only when something has to be kept
-//! for later (the page to return to after the login, a flash message).
+//! Sign-ins: a random token in the `bluebook-session` cookie (HttpOnly,
+//! SameSite=Lax, Secure on HTTPS), stored as its SHA-256 in `sessions`,
+//! good for `SESSION_LIFETIME_DAYS` (400 by default) from the login, so
+//! pilots stay signed in. A guest gets a session only when something has
+//! to be kept for later (the page to return to after the login, a flash
+//! message).
 //!
-//! `data` holds what Laravel kept in its session: the active character
-//! (`active_character_id`), the account a login adds its character to
-//! (`add_to_account`), the page to return to (`intended`) and the flash
-//! message of the next page (`flash`).
+//! `data` holds the active character (`active_character_id`), the account
+//! a login adds its character to (`add_to_account`), the page to return
+//! to (`intended`) and the flash message of the next page (`flash`).
 
 use axum::http::{HeaderMap, header};
 use axum_extra::extract::cookie::{Cookie, SameSite};

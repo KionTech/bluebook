@@ -1,12 +1,12 @@
-//! tests/Feature/Admin/PilotsTest.php: the admin's pilot list, flat and
-//! grouped by corporation or alliance, with effective standings.
+//! The admin's pilot list, flat and grouped by corporation or alliance,
+//! with effective standings.
 
 use serde_json::json;
 
 use crate::common::factories::{NewCharacter, Owner};
 use crate::common::{Browser, TestApp, assert_json_eq};
 
-/// `pilotsAdmin()`: the admin is "Admin Pilot", so alphabetical
+/// The admin is "Admin Pilot", so alphabetical
 /// assertions hold.
 async fn admin(app: &mut TestApp) -> Browser {
     let user = app.user().await;
@@ -213,7 +213,6 @@ async fn excludes_corporations_without_registered_characters() {
     assert_eq!(props["groups"]["data"].as_array().map(Vec::len), Some(0));
 }
 
-/// FIXES.md, "Percent and underscore in the pilot search were wildcards".
 #[tokio::test]
 async fn the_search_matches_percent_and_underscore_literally() {
     let mut app = TestApp::new().await;

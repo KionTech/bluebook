@@ -1,4 +1,4 @@
-//! The dashboard (`DashboardController`): the source, its standings with
+//! The dashboard: the source, its standings with
 //! the redundancy flags (for those who may see them), the user's
 //! characters and the entities they could request a standing for.
 
@@ -15,7 +15,7 @@ use super::account::{self, Account};
 use super::errors;
 use super::pages::{page_path, shared};
 use super::viewer::Viewer;
-use crate::format::php_float;
+use crate::format::standing_value;
 use crate::scopes::WRITE_CHARACTER_CONTACTS;
 use crate::standings::{self, Source, key};
 
@@ -154,14 +154,14 @@ async fn standings(state: &AppState) -> sqlx::Result<Value> {
             "contact_id": contact.contact_id,
             "contact_type": contact.contact_type,
             "name": contact.name,
-            "standing": php_float(contact.standing),
+            "standing": standing_value(contact.standing),
             "redundant_via": redundant_via,
         }));
     }
     Ok(Value::Array(list))
 }
 
-/// `CharacterSyncResource` of every character of the account.
+/// Every character of the account with its sync state.
 async fn characters(
     state: &AppState,
     account: &Account,

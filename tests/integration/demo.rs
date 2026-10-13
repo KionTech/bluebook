@@ -1,4 +1,4 @@
-//! The local demo login and its seed (FIXES.md, "The demo login").
+//! The local demo login and its seed.
 
 use serde_json::json;
 

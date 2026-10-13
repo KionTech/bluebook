@@ -1,6 +1,5 @@
-//! tests/Feature/DashboardStandingsTest.php and DashboardTest.php: the
-//! dashboard's standings with their redundancy flags, the characters and
-//! the request options.
+//! The dashboard's standings with their redundancy flags, the characters
+//! and the request options.
 
 use serde_json::{Value, json};
 
@@ -197,8 +196,6 @@ async fn exposes_the_corporation_entity_as_a_deduplicated_request_option() {
     );
 }
 
-// DashboardTest.php
-
 #[tokio::test]
 async fn guests_are_redirected_to_the_login_page() {
     let app = TestApp::new().await;
@@ -220,8 +217,7 @@ async fn authenticated_users_can_visit_the_dashboard() {
         .assert_status(200);
 }
 
-// New: the orderings Laravel left to MySQL (FIXES.md, "Orderings without
-// an ORDER BY").
+// Orderings the pages rely on.
 
 #[tokio::test]
 async fn characters_are_listed_by_id() {

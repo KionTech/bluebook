@@ -1,5 +1,5 @@
-//! The sync of one character's in-game contacts with the source
-//! (`CharacterStandingsSyncService`): new standings are added, changed ones
+//! The sync of one character's in-game contacts with the source: new
+//! standings are added, changed ones
 //! edited, and only contacts the sync wrote before and the source dropped
 //! are deleted; personal contacts are never touched.
 //!
@@ -7,9 +7,7 @@
 //! writes, the ledger as it was). The ledger (`character_synced_contacts`)
 //! records what is in game because of the sync: contacts that already
 //! match, writes ESI accepted, and deletes that failed; a refused add or
-//! edit keeps the row it had (FIXES.md, "A failed read of a character's
-//! contacts counted as no contacts" and "The ledger recorded writes ESI
-//! refused").
+//! edit keeps the row it had.
 
 use std::collections::HashMap;
 
@@ -17,7 +15,7 @@ use reqwest::Method;
 
 use crate::auth::tokens::has_scope;
 use crate::esi;
-use crate::format::php_float_string;
+use crate::format::standing_string;
 use crate::scopes::{READ_CHARACTER_CONTACTS, WRITE_CHARACTER_CONTACTS};
 use crate::server::AppState;
 use crate::standings::{STANDING_EPSILON, Source};
@@ -30,7 +28,7 @@ const DELETE_CHUNK: usize = 20;
 type ByStanding = Vec<(String, f64, Vec<i64>)>;
 
 fn group(groups: &mut ByStanding, standing: f64, id: i64) {
-    let label = php_float_string(standing);
+    let label = standing_string(standing);
     match groups.iter_mut().find(|(key, _, _)| *key == label) {
         Some((_, _, ids)) => ids.push(id),
         None => groups.push((label, standing, vec![id])),

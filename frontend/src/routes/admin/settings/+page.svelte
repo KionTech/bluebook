@@ -145,10 +145,7 @@
     </SectionHeading>
 
     {#if !data.adminCharacter}
-      <p
-        role="alert"
-        class="frame tone-error tone-bar mb-4 px-4 py-3 text-sm [--cut:8px]"
-      >
+      <p role="alert" class="frame tone-error tone-bar mb-4 px-4 py-3 text-sm [--cut:8px]">
         Your active character could not be resolved.
       </p>
     {/if}

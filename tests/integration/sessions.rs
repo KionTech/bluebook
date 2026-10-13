@@ -1,7 +1,5 @@
-//! The sign-in without Laravel's sessions (FIXES.md, "One new login
-//! instead of a session bridge", "Cross-site forms are refused without a
-//! CSRF token"): the session's lifetime, the same-origin check and a
-//! guest's form.
+//! Sign-ins: the session's lifetime, the same-origin check for forms and
+//! a guest's form.
 
 use axum::body::Body;
 use axum::http::Method;
@@ -28,7 +26,7 @@ async fn a_session_lasts_its_lifetime() {
 }
 
 #[tokio::test]
-async fn a_laravel_session_cookie_is_a_guest() {
+async fn an_unknown_session_cookie_is_a_guest() {
     let app = TestApp::new().await;
     let browser = Browser {
         cookie: Some("bluebook-session=eyJpdiI6IlUyZEwzdkl2UzFlQU1hL2JXTzR5RkE9PSJ9".to_owned()),

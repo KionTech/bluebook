@@ -1,4 +1,4 @@
-// tests/Browser/SetupWizardBrowserTest.php: the first-login wizard.
+// The first-login wizard.
 import { expect, test } from '@playwright/test';
 
 import {

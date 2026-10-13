@@ -1,5 +1,4 @@
-//! tests/Feature/StandingsVisibilityTest.php: who may see the source's
-//! standings on the dashboard.
+//! Who may see the source's standings on the dashboard.
 
 use serde_json::json;
 

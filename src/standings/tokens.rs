@@ -1,8 +1,7 @@
-//! `standings:check-tokens`, daily: every character that syncs but lost
+//! The token check, daily: every character that syncs but lost
 //! its write token, or whose write token has kept failing for three days
 //! (`tokens::LONG_FAILING`), gets an EVE mail from the source's reader, at
-//! most once every three days. Only characters on an account (FIXES.md,
-//! "Removed characters were mailed about lapsed tokens forever").
+//! most once every three days. Only characters on an account.
 
 use time::Duration;
 

@@ -1,31 +1,28 @@
 // The admin's flat character list: searched and sorted in the browser.
-import type { PilotCharacter } from "#lib/types.ts";
+import type { PilotCharacter } from '#lib/types.ts';
 
-export type SortKey =
-  "name" | "account" | "corporation" | "alliance" | "standing";
+export type SortKey = 'name' | 'account' | 'corporation' | 'alliance' | 'standing';
 
 export const VIEWS = [
-  { value: "characters", label: "Characters" },
-  { value: "corporations", label: "Corporations" },
-  { value: "alliances", label: "Alliances" },
+  { value: 'characters', label: 'Characters' },
+  { value: 'corporations', label: 'Corporations' },
+  { value: 'alliances', label: 'Alliances' },
 ] as const;
 
-export type View = (typeof VIEWS)[number]["value"];
+export type View = (typeof VIEWS)[number]['value'];
 
 export function viewOf(value: string): View {
-  return VIEWS.some((view) => view.value === value)
-    ? (value as View)
-    : "characters";
+  return VIEWS.some((view) => view.value === value) ? (value as View) : 'characters';
 }
 
 function sortText(character: PilotCharacter, key: SortKey): string {
-  if (key === "account") {
-    return character.account.name ?? "";
+  if (key === 'account') {
+    return character.account.name ?? '';
   }
-  if (key === "corporation" || key === "alliance") {
-    return character[key]?.name ?? "";
+  if (key === 'corporation' || key === 'alliance') {
+    return character[key]?.name ?? '';
   }
-  return character.name ?? "";
+  return character.name ?? '';
 }
 
 /** The characters matching the search (name, account, corporation or
@@ -40,7 +37,7 @@ export function visibleCharacters(
   const term = search.trim().toLowerCase();
   const rows = characters.filter(
     (character) =>
-      term === "" ||
+      term === '' ||
       [
         character.name,
         character.account.name,
@@ -50,7 +47,7 @@ export function visibleCharacters(
   );
   const direction = ascending ? 1 : -1;
   return rows.toSorted((a, b) => {
-    if (key === "standing") {
+    if (key === 'standing') {
       if (a.standing === null || b.standing === null) {
         return Number(a.standing === null) - Number(b.standing === null);
       }
@@ -63,12 +60,12 @@ export function visibleCharacters(
 /** The query of the pilots page for a view and search. */
 export function pilotsUrl(view: View, search: string): string {
   const params = new URLSearchParams();
-  if (view !== "characters") {
-    params.set("view", view);
+  if (view !== 'characters') {
+    params.set('view', view);
   }
   if (search) {
-    params.set("search", search);
+    params.set('search', search);
   }
   const query = params.toString();
-  return query ? `/admin/pilots?${query}` : "/admin/pilots";
+  return query ? `/admin/pilots?${query}` : '/admin/pilots';
 }

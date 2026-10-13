@@ -18,9 +18,11 @@ in doubt about structure or tooling, do what they do.
 
 ## Details that look arbitrary but are not
 
-- The page props keep the keys and their order of the Laravel resources
-  (`serde_json` with `preserve_order`); standings are floats (`10.0`),
-  times `toIso8601String()` (`2026-07-24T12:18:44+00:00`).
+- The page props keep their key order (`serde_json` with
+  `preserve_order`), and the frontend types in `frontend/src/lib/types.ts`
+  follow them key for key. Whole standings have no fraction (`10`, but
+  `7.5`), times ISO 8601 with an explicit offset
+  (`2026-07-24T12:18:44+00:00`).
 - EVE's downtime here is 11:00 to 11:15 UTC (start included, end not).
 - The schedule fires on wall clock boundaries (every 5 minutes on :00,
   :05, ...; hourly at :37; daily at 00:00 UTC): the dashboard's countdown
@@ -54,7 +56,9 @@ in doubt about structure or tooling, do what they do.
   first use, `TEST_DATABASE_URL` to override) with a fixed clock
   (`clock::Clock`). ESI, EVE SSO and Discord are local mocks on ephemeral
   ports (`tests/integration/common/mocks.rs`), never stubs of our own
-  code.
+  code. The page, form and background suites start from a small seeded
+  world (`common::world`); the others build what they need with the
+  factories.
 - Integration suites are modules of the single `tests/integration`
   binary and run single-threaded (`.cargo/config.toml`): they truncate
   the shared tables. Run one suite with `cargo test <module>::`.
@@ -92,11 +96,3 @@ in doubt about structure or tooling, do what they do.
   `bluebook-frontend` and `bluebook-proxy`, images from GHCR built by
   `.github/workflows/release.yml`); the api reaches the shared Coolify
   Postgres over the `coolify` network.
-
-## Legacy reference
-
-Until the rewrite is merged, the Laravel app on `main` is the reference:
-`scripts/laravel-reference/run.sh` runs it in docker on 8315, `record.py`
-records the golden fixtures in `tests/fixtures/golden`, `scripts/parity`
-prints the parity report. FIXES.md lists every intended difference and
-tests/PORTED.md maps the PHP tests.

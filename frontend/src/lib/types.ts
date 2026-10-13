@@ -1,5 +1,4 @@
-// The props the api serves, key for key (the Inertia props of the Laravel
-// pages).
+// The props the api serves, key for key.
 
 /** A corporation or alliance as the characters carry it. */
 export type EntitySummary = {
@@ -8,7 +7,7 @@ export type EntitySummary = {
   ticker: string | null;
 };
 
-/** `CharacterResource`. */
+/** A character with its corporation and alliance. */
 export type Character = {
   id: number;
   name: string | null;
@@ -45,7 +44,7 @@ export type SharedProps = {
   flash: Flash;
 };
 
-/** A link of a Laravel paginator. */
+/** A link of a paginated list. */
 export type PaginationLink = {
   url: string | null;
   label: string;
@@ -53,7 +52,7 @@ export type PaginationLink = {
   active: boolean;
 };
 
-/** A Laravel `LengthAwarePaginator`. */
+/** A page of a list with its links and counts. */
 export type Paginated<T> = {
   current_page: number;
   data: T[];
@@ -116,7 +115,7 @@ export type RequestOption = {
 /** The standing a request's subject already has. */
 export type EffectiveStanding = {
   standing: number;
-  source: "direct" | "corporation" | "alliance";
+  source: 'direct' | 'corporation' | 'alliance';
   via_type: string;
   via_id: number;
   via_name: string | null;

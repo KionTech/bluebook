@@ -7,15 +7,13 @@
     <!-- Follows the system's dark mode when the appearance is "system". -->
     <script>
       (function () {
-        const appearance = "%appearance.value%";
+        const appearance = '%appearance.value%';
 
-        if (appearance === "system") {
-          const prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
+        if (appearance === 'system') {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
           if (prefersDark) {
-            document.documentElement.classList.add("dark");
+            document.documentElement.classList.add('dark');
           }
         }
       })();

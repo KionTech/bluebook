@@ -1,4 +1,4 @@
-//! tests/Feature/Admin/SettingsPageTest.php: the admin settings page.
+//! The admin settings page.
 
 use crate::common::factories::{NewCharacter, Owner};
 use crate::common::{READ_CORPORATION_CONTACTS, SEND_MAIL, TestApp};
@@ -30,8 +30,6 @@ async fn forbids_non_admins_from_the_settings_page() {
         .assert_status(403);
 }
 
-/// FIXES.md, "The source came from the active character, not an admin
-/// character".
 #[tokio::test]
 async fn offers_the_admin_characters_entities_while_an_alt_is_active() {
     let mut app = TestApp::new().await;

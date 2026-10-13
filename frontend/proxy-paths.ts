@@ -4,11 +4,11 @@
 // Paths Axum owns outright: every method proxies to the API. `/api` the
 // page props and the health check, `/up` the health page, `/eve` the EVE
 // login and its callback, `/demo-login` the local demo login, `/storage`
-// the local disk's routes Laravel had.
+// the signed file links.
 export const axumPrefixes = ['/api', '/up', '/eve', '/demo-login', '/storage'];
 
-// `/settings` itself (Laravel's redirect to the appearance page, for every
-// method) is Axum's; the page below it, `/settings/appearance`, is
+// `/settings` itself (a redirect to the appearance page, for every method)
+// is Axum's; the page below it, `/settings/appearance`, is
 // SvelteKit's.
 const axumExact = new Set(['/settings']);
 

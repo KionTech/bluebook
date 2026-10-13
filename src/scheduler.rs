@@ -1,8 +1,8 @@
-//! The schedule of routes/console.php, in UTC: `standings:sync` every five
-//! minutes, `characters:sync-affiliations` hourly at :37 and
-//! `standings:check-tokens` daily at 00:00, on wall clock boundaries (the
-//! dashboard's countdown is the last sync plus five minutes). Only with
-//! SCHEDULER_ENABLED (FIXES.md, "The schedule is off unless switched on").
+//! The schedule, in UTC: the standings sync every five minutes, the
+//! affiliation refresh hourly at :37 and the token check daily at 00:00,
+//! on wall clock boundaries (the dashboard's countdown is the last sync
+//! plus five minutes). It writes to in-game contact lists, so it runs only
+//! with SCHEDULER_ENABLED.
 //! A task still running when its next run is due skips that run
 //! (`withoutOverlapping`). The tasks also run once as commands (src/bin).
 
@@ -121,7 +121,7 @@ pub fn spawn(state: &AppState) -> Vec<tokio::task::JoinHandle<()>> {
 const FAILED_JOBS_KEPT_FOR: Duration = Duration::days(7);
 
 /// Hourly, always: expired sessions and throttle keys, and failed jobs
-/// older than a week, go (Laravel's lottery and nobody did this).
+/// older than a week, go.
 pub fn spawn_housekeeping(state: &AppState) -> tokio::task::JoinHandle<()> {
     let state = state.clone();
     tokio::spawn(async move {

@@ -1,6 +1,5 @@
-//! tests/Feature/ExampleTest.php (the home page answers) and what every
-//! page shares: the error answers, `/settings`, the health checks, the
-//! stale Inertia tabs and the trailing slash.
+//! What every page shares: the home page, the error answers, `/settings`,
+//! the health checks and the trailing slash.
 
 use serde_json::json;
 
@@ -163,42 +162,6 @@ async fn the_local_disk_routes_are_forbidden() {
         response.assert_status(403);
         assert!(response.text().contains("<title>Forbidden</title>"));
     }
-}
-
-#[tokio::test]
-async fn a_stale_inertia_tab_reloads_the_page() {
-    let app = TestApp::new().await;
-
-    let page = app
-        .get_with(
-            &Browser::guest(),
-            "/dashboard?x=1",
-            &[("x-inertia", "true"), ("x-forwarded-proto", "https")],
-        )
-        .await;
-    page.assert_status(409);
-    assert_eq!(
-        page.header("x-inertia-location"),
-        Some(format!("{APP_URL}/dashboard?x=1").as_str())
-    );
-
-    let form = app
-        .request(
-            axum::http::Method::PUT,
-            "/standings/1",
-            crate::common::header_map(&[
-                ("host", crate::common::HOST),
-                ("x-inertia", "true"),
-                ("referer", &format!("{APP_URL}/dashboard")),
-            ]),
-            axum::body::Body::empty(),
-        )
-        .await;
-    form.assert_status(409);
-    assert_eq!(
-        form.header("x-inertia-location"),
-        Some(format!("{APP_URL}/dashboard").as_str())
-    );
 }
 
 #[tokio::test]

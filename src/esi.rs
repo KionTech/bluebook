@@ -1,14 +1,12 @@
-//! EVE's API as `nicolaskion/eve` 0.11 called it: every request carries
-//! the user agent and `X-Compatibility-Date: 2026-07-17`; reads (contacts,
-//! affiliations, names, corporations, alliances) are tried five times, five
-//! seconds apart, while ESI answers with a server error; contact writes and
-//! mail are tried once. Authenticated calls use the character's token for
-//! the scope (`auth::tokens`). A 401 refreshes the token and tries once
-//! more; a second 401 right after the fresh refresh deletes it. A 403 (a
-//! missing in-game role) leaves the token alone. Rate limits, server
-//! errors and an unreachable ESI keep the token and mark it failing; a
-//! success clears the mark. A failure is an error; callers carry on
-//! without the data.
+//! EVE's API: every request carries the user agent and `X-Compatibility-Date:
+//! 2026-07-17`; reads (contacts, affiliations, names, corporations, alliances)
+//! are tried five times, five seconds apart, while ESI answers with a server
+//! error; contact writes and mail are tried once. Authenticated calls use the
+//! character's token for the scope (`auth::tokens`). A 401 refreshes the token
+//! and tries once more; a second 401 right after the fresh refresh deletes it.
+//! A 403 (a missing in-game role) leaves the token alone. Rate limits, server
+//! errors and an unreachable ESI keep the token and mark it failing; a success
+//! clears the mark. A failure is an error; callers carry on without the data.
 
 use std::fmt;
 use std::sync::{Arc, Mutex};
@@ -20,7 +18,7 @@ use serde_json::{Value, json};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::auth::tokens::{self, TokenError};
-use crate::format::php_float_string;
+use crate::format::standing_string;
 use crate::server::AppState;
 
 pub const COMPATIBILITY_DATE: &str = "2026-07-17";
@@ -128,7 +126,7 @@ pub struct Alliance {
     pub date_founded: Option<String>,
 }
 
-/// The decoding of `nicolaskion/eve`'s `Unicode::normalize`: literal
+/// Names as ESI sometimes sends them: literal
 /// `\uXXXX` escapes (also inside Python's `u'...'`) become characters, and
 /// the text is NFC.
 pub fn normalize(text: &str) -> String {
@@ -463,7 +461,7 @@ pub async fn write_contacts(
 ) -> Result<(), EsiError> {
     let path = format!("/characters/{character_id}/contacts/");
     let query = [
-        ("standing", php_float_string(standing)),
+        ("standing", standing_string(standing)),
         ("watched", "0".to_owned()),
     ];
     let body = json!(ids);

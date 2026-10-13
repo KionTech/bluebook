@@ -90,9 +90,6 @@ pub struct Canned {
     pub body: Value,
 }
 
-/// A fixed answer: status, body and headers.
-type ExactAnswer = (u16, Value, Vec<(String, String)>);
-
 #[derive(Default)]
 struct EsiData {
     /// character id to (corporation id, alliance id).
@@ -114,13 +111,6 @@ struct EsiData {
     failures: HashMap<String, u16>,
     /// Every request answers this status.
     fail_all: Option<u16>,
-    /// `METHOD /path` to a fixed answer (the golden scenarios' fakes).
-    exact: HashMap<String, ExactAnswer>,
-    /// Only the exact answers; anything else is a 404, as the Laravel
-    /// reference's fakes answered.
-    strict: bool,
-    /// In strict mode, contact writes still succeed.
-    writes_succeed: bool,
     next_mail_id: i64,
     requests: Vec<Recorded>,
 }
@@ -220,21 +210,6 @@ impl MockEsi {
         });
     }
 
-    /// `METHOD /path` always answers this (the recorded fakes).
-    pub fn exact(&self, line: &str, code: u16, body: Value, headers: Vec<(String, String)>) {
-        self.with(|data| data.exact.insert(line.to_owned(), (code, body, headers)));
-    }
-
-    /// Answers only what `exact` set, 404 for anything else.
-    pub fn strict(&self) {
-        self.with(|data| data.strict = true);
-    }
-
-    /// Contact writes succeed even in strict mode.
-    pub fn writes_succeed(&self) {
-        self.with(|data| data.writes_succeed = true);
-    }
-
     /// `METHOD /path` (or `/path` for any method) answers a status.
     pub fn fail_path(&self, path: &str, code: u16) {
         self.with(|data| data.failures.insert(path.to_owned(), code));
@@ -259,7 +234,7 @@ impl MockEsi {
     }
 }
 
-/// A minimal public corporation, like the PHP tests' `esiCorporationPayload`.
+/// A minimal public corporation.
 pub fn esi_corporation_payload(name: &str, alliance_id: Option<i64>) -> Value {
     json!({
         "name": name,
@@ -275,7 +250,7 @@ pub fn esi_corporation_payload(name: &str, alliance_id: Option<i64>) -> Value {
     })
 }
 
-/// A minimal public alliance, like the PHP tests' `esiAlliancePayload`.
+/// A minimal public alliance.
 pub fn esi_alliance_payload(name: &str) -> Value {
     json!({
         "name": name,
@@ -319,26 +294,6 @@ async fn esi_any(
         .or_else(|| data.failures.get(&path))
     {
         return esi_json(*code, json!({ "error": "mock failure" }));
-    }
-    if let Some((code, body, headers)) = data.exact.get(&line).cloned() {
-        let mut response = if body.is_null() {
-            status(code).into_response()
-        } else {
-            esi_json(code, body)
-        };
-        for (name, value) in headers {
-            response.headers_mut().insert(
-                axum::http::HeaderName::from_bytes(name.as_bytes()).expect("a header name"),
-                HeaderValue::from_str(&value).expect("a header"),
-            );
-        }
-        return response;
-    }
-    let is_write = matches!(method.as_str(), "POST" | "PUT" | "DELETE")
-        && path.starts_with("/characters/")
-        && path.ends_with("/contacts/");
-    if data.strict && !(data.writes_succeed && is_write) {
-        return status(404).into_response();
     }
 
     let segments: Vec<&str> = path.trim_matches('/').split('/').collect();

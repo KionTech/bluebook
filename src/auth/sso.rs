@@ -1,8 +1,7 @@
-//! EVE SSO (OAuth2), as the Socialite EVE Online provider and the
-//! `nicolaskion/eve` connector used it: the authorize redirect with the
-//! scopes a link asks for, the code traded for tokens with basic auth (the
-//! access token is a JWT, verified against EVE's published keys: signature,
-//! expiry, issuer), and the refresh of a stored token.
+//! EVE SSO (OAuth2): the authorize redirect with the scopes a link asks for,
+//! the code traded for tokens with basic auth (the access token is a JWT,
+//! verified against EVE's published keys: signature, expiry, issuer), and the
+//! refresh of a stored token.
 
 use std::fmt;
 use std::time::Duration;

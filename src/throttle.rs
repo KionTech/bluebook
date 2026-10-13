@@ -1,5 +1,4 @@
-//! Keys that hold something back until they expire, in place of Laravel's
-//! `Cache::add`: the hourly "source unreadable" alert and the mail to a
+//! Keys that hold something back until they expire: the hourly "source unreadable" alert and the mail to a
 //! lapsed character every three days.
 
 use sqlx::PgPool;

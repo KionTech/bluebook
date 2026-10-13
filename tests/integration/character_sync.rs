@@ -1,10 +1,9 @@
-//! tests/Feature/Standings/CharacterStandingsSyncTest.php: writing the
-//! source's standings to one character's in-game contacts.
+//! Writing the source's standings to one character's in-game contacts.
 
 use crate::common::factories::NewCharacter;
 use crate::common::{READ_CHARACTER_CONTACTS, TestApp, WRITE_CHARACTER_CONTACTS, assert_json_eq};
 
-/// `syncingCharacter()`: opted in, with both contact scopes.
+/// Opted in, with both contact scopes.
 async fn syncing_character(app: &TestApp) -> i64 {
     let character = app
         .character(NewCharacter {
@@ -20,7 +19,7 @@ async fn syncing_character(app: &TestApp) -> i64 {
     character
 }
 
-/// `fakeContacts()`: the character's current contacts.
+/// The character's current contacts.
 fn current_contacts(app: &TestApp, character: i64, contacts: &[(i64, f64)]) {
     let contacts: Vec<(i64, &str, f64)> = contacts
         .iter()
@@ -202,7 +201,7 @@ async fn skips_characters_that_already_inherit_the_source_corporation_standings(
     assert_eq!(app.esi.requests().len(), 0);
 }
 
-// New: the chunks ESI allows (100 ids per add or edit, 20 per delete).
+// The chunks ESI allows (100 ids per add or edit, 20 per delete).
 
 #[tokio::test]
 async fn writes_in_chunks_of_one_hundred_and_deletes_in_chunks_of_twenty() {
@@ -248,8 +247,6 @@ async fn ledger(app: &TestApp, character: i64) -> serde_json::Value {
     )
 }
 
-/// FIXES.md, "A failed read of a character's contacts counted as no
-/// contacts".
 #[tokio::test]
 async fn a_failed_read_of_the_contacts_aborts_the_sync() {
     let app = TestApp::new().await;
@@ -273,7 +270,6 @@ async fn a_failed_read_of_the_contacts_aborts_the_sync() {
     );
 }
 
-/// FIXES.md, "The ledger recorded writes ESI refused".
 #[tokio::test]
 async fn the_ledger_records_only_writes_that_succeeded() {
     let app = TestApp::new().await;

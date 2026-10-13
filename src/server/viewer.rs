@@ -1,6 +1,5 @@
 //! Who is asking: the session cookie resolved once per request, before
-//! any handler runs, as Laravel's session middleware and `auth` guard
-//! did, plus the helpers that write to the session (the flash message,
+//! any handler runs, plus the helpers that write to the session (the flash message,
 //! the intended URL), starting a guest session when there is none.
 
 use axum::extract::{FromRequestParts, Request, State};
@@ -97,8 +96,7 @@ pub async fn put(
     }
 }
 
-/// The flash message of the next page: `success`, `error` or `info`
-/// (Laravel's `->with($kind, $message)`).
+/// The flash message of the next page: `success`, `error` or `info`.
 pub fn flash_value(kind: &str, message: &str) -> Value {
     json!({ "kind": kind, "message": message })
 }

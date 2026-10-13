@@ -1,7 +1,6 @@
-//! The standings: the one source (`StandingsSource`), its contacts as the
-//! canonical standings (`SourceContact`), the refresh from ESI
-//! (`source`), the five-minute command (`sync`), the sync of one
-//! character's in-game contacts (`character`), the lapsed token mail
+//! The standings: the one source, its contacts as the canonical standings, the
+//! refresh from ESI (`source`), the five-minute command (`sync`), the sync of
+//! one character's in-game contacts (`character`), the lapsed token mail
 //! (`tokens`), and the standing that applies to an entity (`effective`).
 
 pub mod character;
@@ -25,10 +24,8 @@ pub fn key(kind: &str, id: i64) -> String {
 
 /// SQL: the name of the subject of the standing request `r` asked through
 /// the character `c`: the character's own name (a character asks for
-/// itself), else the corporation or alliance by the subject's id. Laravel
-/// took those from the requester's current corporation or alliance, which
-/// named the wrong entity (or none) once the requester moved (FIXES.md,
-/// "Requests named the requester's corporation, not the one asked for").
+/// itself), else the corporation or alliance by the subject's id, so the
+/// request keeps its name after the requester moved.
 pub const SUBJECT_NAME_SQL: &str = "case r.subject_type
         when 'character' then c.name
         when 'corporation' then (select s.name from corporations s where s.id = r.subject_id)
@@ -98,7 +95,7 @@ impl Source {
         Ok(!exists)
     }
 
-    /// The summary the admin pages show (`StandingsSourceSummaryResource`).
+    /// The summary the admin pages show.
     pub async fn summary(&self, pool: &PgPool) -> sqlx::Result<serde_json::Value> {
         Ok(serde_json::json!({
             "type": self.kind,
@@ -144,7 +141,7 @@ pub struct Contact {
     pub contact_type: String,
     pub standing: f64,
     pub name: Option<String>,
-    /// The entity is stored locally (Laravel's loaded `entity`).
+    /// The entity is stored locally.
     pub known: bool,
     pub parent_corporation_id: Option<i64>,
     pub parent_alliance_id: Option<i64>,

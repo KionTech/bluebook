@@ -1,4 +1,4 @@
-// The heads of the pages: the title Inertia built (`<page> - <app name>`),
+// The heads of the pages: the title (`<page> - <app name>`),
 // the icons, the appearance class and robots.txt.
 import { expect, test } from '@playwright/test';
 

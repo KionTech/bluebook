@@ -1,8 +1,9 @@
 // Screenshot baselines of the design: the dashboard (dark, the default,
 // and light), the admin's requests and pilots, at desktop and phone width.
 // Fixed data, a fixed browser clock and EVE images stubbed so only the
-// layout can change; the fonts are self-hosted. Fonts and rendering differ between machines, so CI skips them;
-// refresh with `npx playwright test design --update-snapshots`.
+// layout can change; the fonts are self-hosted. Fonts and rendering
+// differ between machines, so CI skips them; refresh with
+// `npx playwright test design --update-snapshots`.
 import { type Page, expect, test } from '@playwright/test';
 
 import {

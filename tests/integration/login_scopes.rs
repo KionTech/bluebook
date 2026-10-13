@@ -1,5 +1,5 @@
-//! tests/Feature/Auth/LoginScopesTest.php: the scopes the login asks EVE
-//! for, and the grant links that ask for more.
+//! The scopes the login asks EVE for, and the grant links that ask for
+//! more.
 
 use serde_json::json;
 
@@ -127,7 +127,6 @@ async fn shows_whether_the_admin_character_can_send_expiry_mail() {
     assert_eq!(props["adminCharacter"]["has_mail_scope"], true);
 }
 
-/// FIXES.md, "An unknown scope in the login link was a server error".
 #[tokio::test]
 async fn an_unknown_scope_is_a_bad_request() {
     let app = TestApp::new().await;

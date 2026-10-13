@@ -4,18 +4,18 @@
   colours and amber warnings. Dark first; the light theme speaks the same
   language. Fonts are self-hosted (fontsource), no external requests.
 */
-@import "@fontsource/barlow/400.css";
-@import "@fontsource/barlow/500.css";
-@import "@fontsource/barlow/600.css";
-@import "@fontsource/barlow-condensed/500.css";
-@import "@fontsource/barlow-condensed/600.css";
-@import "@fontsource/barlow-condensed/700.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -32,10 +32,9 @@
 }
 
 @theme inline {
-  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
-  --font-display:
-    "Barlow Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -200,11 +199,7 @@
     /* A faint grid and a cold glow from the top, seen only beside the
        content column, which is opaque. */
     background-image:
-      radial-gradient(
-        ellipse 80% 40% at 50% -10%,
-        var(--glow),
-        transparent 70%
-      ),
+      radial-gradient(ellipse 80% 40% at 50% -10%, var(--glow), transparent 70%),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size:
@@ -256,7 +251,7 @@
 
   .frame::before,
   .frame::after {
-    content: "";
+    content: '';
     position: absolute;
     width: var(--cut);
     height: var(--cut);
@@ -359,7 +354,7 @@
   .bracketed::after {
     --b: var(--border-strong);
     --l: 5px;
-    content: "";
+    content: '';
     position: absolute;
     inset: -3px;
     pointer-events: none;

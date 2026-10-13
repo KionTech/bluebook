@@ -271,9 +271,8 @@ pub async fn set_main(
     .await
 }
 
-/// `RemoveCharacterFromUserAction`: the character leaves the account, its
-/// tokens go, and it stops syncing (FIXES.md, "Removed characters were
-/// mailed about lapsed tokens forever").
+/// The character leaves the account, its tokens go, and it stops syncing,
+/// so it is not mailed about a lapsed token.
 async fn remove(state: &AppState, account: &Account, character_id: i64) -> sqlx::Result<()> {
     let now = state.clock.now();
     let mut tx = state.pool.begin().await?;
@@ -375,8 +374,8 @@ pub async fn complete_setup(
     Ok(Done::back().into_response())
 }
 
-/// `/settings`, every method: Laravel's redirect to the appearance page,
-/// behind the login.
+/// `/settings`, every method: a redirect to the appearance page, behind
+/// the login.
 pub async fn settings_redirect(
     State(state): State<AppState>,
     viewer: Viewer,

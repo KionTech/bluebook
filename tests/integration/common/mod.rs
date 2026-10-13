@@ -1,15 +1,14 @@
 //! Shared harness for the integration suites: the real router on the test
 //! database with a fixed clock, mock ESI, EVE SSO and Discord servers on
 //! ephemeral ports, request helpers that speak like the SvelteKit pages
-//! (props loads and JSON forms), the factories the PHP tests used and the
-//! JSON assertions.
+//! (props loads and JSON forms), the factories and the JSON assertions.
 
 // Not every suite uses every helper.
 #![allow(dead_code)]
 
 pub mod factories;
-pub mod golden;
 pub mod mocks;
+pub mod world;
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -31,16 +30,16 @@ use bluebook::server::AppState;
 #[allow(unused_imports)]
 pub use mocks::{Canned, MockDiscord, MockEsi, MockSso};
 
-/// The site URL, as production has it and the reference recorded it.
+/// The site URL, as production has it.
 pub const APP_URL: &str = "https://bluebook.nicolaskion.dev";
 pub const HOST: &str = "bluebook.nicolaskion.dev";
 pub const EVE_CLIENT_ID: &str = "test-client-id";
 pub const EVE_CLIENT_SECRET: &str = "test-client-secret";
 
-/// The moment the ported PHP tests run at: they pinned 2026-06-25 14:00
-/// UTC, outside EVE's downtime.
+/// The moment the tests run at: 2026-06-25 14:00 UTC, outside EVE's
+/// downtime.
 pub const DEFAULT_NOW: OffsetDateTime = datetime!(2026-06-25 14:00:00 UTC);
-/// `DEFAULT_NOW` as `toIso8601String()` writes it.
+/// `DEFAULT_NOW` as the props write it.
 pub const NOW_ISO: &str = "2026-06-25T14:00:00+00:00";
 
 pub const READ_CHARACTER_CONTACTS: &str = "esi-characters.read_contacts.v1";
@@ -73,7 +72,7 @@ pub async fn test_pool() -> PgPool {
         .expect("Postgres not reachable - start it with `docker compose up -d postgres`")
 }
 
-/// Clears every table; ids restart at 1, like Laravel's RefreshDatabase.
+/// Clears every table; ids restart at 1.
 pub async fn reset_database(pool: &PgPool) {
     sqlx::query(
         "truncate alliances, corporations, factions, users, characters, esi_tokens,
@@ -155,7 +154,7 @@ impl TestApp {
     }
 
     /// Rebuilds the router with a changed configuration, on the same
-    /// database, clock and mocks (Laravel's `config([...])`).
+    /// database, clock and mocks.
     pub fn reconfigure(&mut self, change: impl FnOnce(&mut Config)) {
         change(&mut self.config);
         self.state = AppState::new(self.pool.clone(), self.config.clone(), self.clock.clone());
@@ -168,7 +167,7 @@ impl TestApp {
         self.reconfigure(|config| config.admin_character_ids = ids);
     }
 
-    /// Signs a user in (Laravel's `actingAs`), optionally with an active
+    /// Signs a user in, optionally with an active
     /// character in the session.
     pub async fn sign_in(&self, user_id: i64) -> Browser {
         self.sign_in_with(user_id, Map::new()).await
@@ -411,7 +410,7 @@ impl TestResponse {
     }
 
     /// Asserts a successful form answer and returns where it sends the
-    /// browser (`None`: stay and reload, Laravel's `back()`).
+    /// browser (`None`: stay and reload).
     #[track_caller]
     pub fn assert_done(&self) -> Option<String> {
         self.assert_status(200);
@@ -517,23 +516,4 @@ pub fn json_difference(path: &str, expected: &Value, actual: &Value) -> Option<S
         }
         _ => None,
     }
-}
-
-/// The routes of the Laravel app: (method, path).
-pub fn read_routes() -> Vec<(String, String)> {
-    let text = std::fs::read_to_string(repo_path("tests/fixtures/routes.json")).expect("routes");
-    let routes: Vec<Value> = serde_json::from_str(&text).expect("routes JSON");
-    let mut all = Vec::new();
-    for route in routes {
-        let uri = route["uri"].as_str().expect("a uri");
-        let uri = if uri == "/" {
-            "/".to_owned()
-        } else {
-            format!("/{uri}")
-        };
-        for method in route["method"].as_str().expect("methods").split('|') {
-            all.push((method.to_owned(), uri.clone()));
-        }
-    }
-    all
 }

@@ -1,12 +1,11 @@
-//! The harness itself and the route contract: every route of the Laravel
-//! app (tests/fixtures/routes.json) exists in the api, unless SvelteKit
-//! renders it.
+//! The harness itself and the route table: every route the api serves
+//! answers, and every page SvelteKit renders has its props.
 
 use axum::body::Body;
 use axum::http::Method;
 use serde_json::{Value, json};
 
-use crate::common::{HOST, TestApp, header_map, read_routes};
+use crate::common::{HOST, TestApp, header_map};
 
 /// The page GETs SvelteKit renders (frontend/e2e/routes.spec.ts).
 const PAGES: [&str; 7] = [
@@ -19,33 +18,52 @@ const PAGES: [&str; 7] = [
     "/admin/settings",
 ];
 
+/// The routes the api answers itself.
+const API_ROUTES: [(&str, &str); 22] = [
+    ("PUT", "/admin/discord-settings"),
+    ("PUT", "/admin/standing-requests/1"),
+    ("PUT", "/admin/standings"),
+    ("POST", "/admin/standings/sync"),
+    ("PUT", "/auth/character/1"),
+    ("DELETE", "/auth/character/1"),
+    ("PUT", "/auth/character/1/main"),
+    ("GET", "/eve"),
+    ("GET", "/eve/callback"),
+    ("POST", "/logout"),
+    ("GET", "/settings"),
+    ("POST", "/settings"),
+    ("PUT", "/settings"),
+    ("PATCH", "/settings"),
+    ("DELETE", "/settings"),
+    ("POST", "/setup/complete"),
+    ("POST", "/standings/sync"),
+    ("PUT", "/standings/1"),
+    ("POST", "/standings/1/request"),
+    ("GET", "/storage/file.txt"),
+    ("PUT", "/storage/file.txt"),
+    ("GET", "/up"),
+];
+
 #[tokio::test]
-async fn every_api_route_of_the_laravel_app_exists() {
+async fn every_api_route_exists() {
     let app = TestApp::new().await;
-    for (method, uri) in read_routes() {
-        if method == "HEAD" || (method == "GET" && PAGES.contains(&uri.as_str())) {
-            continue;
-        }
-        let path = uri
-            .replace("{path}", "file.txt")
-            .replace("{character}", "1")
-            .replace("{standingRequest}", "1");
+    for (method, path) in API_ROUTES {
         let response = app
             .request(
                 method.parse::<Method>().expect("a method"),
-                &path,
+                path,
                 header_map(&[("host", HOST), ("accept", "application/json")]),
                 Body::empty(),
             )
             .await;
-        assert_ne!(response.status.as_u16(), 405, "{method} {uri}");
+        assert_ne!(response.status.as_u16(), 405, "{method} {path}");
         if response.status.as_u16() == 404
             && let Ok(body) = serde_json::from_slice::<Value>(&response.body)
         {
             let message = body["message"].as_str().unwrap_or_default();
             assert!(
                 !message.contains("could not be found"),
-                "{method} {uri}: {message}"
+                "{method} {path}: {message}"
             );
         }
     }

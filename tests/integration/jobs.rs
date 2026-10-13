@@ -1,7 +1,5 @@
-//! The job queue in place of Laravel's database queue: a job runs once,
-//! is deleted when done and kept with its error when it fails (Laravel's
-//! workers gave every job one try), and two workers never take the same
-//! job.
+//! The job queue: a job runs once, is deleted when done and kept with its
+//! error when it fails, and two workers never take the same job.
 
 use serde_json::json;
 

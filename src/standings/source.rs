@@ -1,4 +1,4 @@
-//! The source refresh (`StandingsSourceService`): an admin character that
+//! The source refresh: an admin character that
 //! can read the source fetches its contacts; when they changed they
 //! become the canonical standings, their entities are stored, and pending
 //! requests that got a direct blue standing are done. A 403 (the reader

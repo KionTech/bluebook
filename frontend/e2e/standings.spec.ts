@@ -1,6 +1,5 @@
-// tests/Browser/StandingsBrowserTest.php: the welcome page and the
-// pilot's dashboard (standings, characters, refresh times, sync now,
-// standing requests).
+// The welcome page and the pilot's dashboard (standings, characters,
+// refresh times, sync now, standing requests).
 import { expect, test } from '@playwright/test';
 
 import {

@@ -1,7 +1,6 @@
-//! The job queue in Postgres, in place of Laravel's database queue and its
-//! five workers: character syncs, the lapsed token mails and the Discord
-//! messages. Workers in the api claim due jobs with `for update skip
-//! locked`. A job gets one try, like Laravel's workers gave it; done jobs
+//! The job queue in Postgres: character syncs, the lapsed token mails and
+//! the Discord messages. Workers in the api claim due jobs with `for
+//! update skip locked`. A job gets one try; done jobs
 //! are deleted, failed ones kept with their error (and dropped after a
 //! week by the housekeeping).
 

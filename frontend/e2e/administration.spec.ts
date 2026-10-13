@@ -1,5 +1,4 @@
-// tests/Browser/AdministrationBrowserTest.php and PilotsBrowserTest.php:
-// the admin's overview, settings, standing requests and pilots.
+// The admin's overview, settings, standing requests and pilots.
 import { expect, test } from '@playwright/test';
 
 import {
@@ -104,7 +103,7 @@ test('lists pilots with their main character and alts', async ({ page, context, 
   noErrors();
 });
 
-// PilotsBrowserTest.php
+// The pilots
 
 test('renders the pilots corporation view with standings and member characters', async ({
   page,

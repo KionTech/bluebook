@@ -1,10 +1,9 @@
-//! The EVE login (`EveController`, `EsiAuthService`), the logout and the
-//! local demo login.
+//! The EVE login, the logout and the local demo login.
 //!
 //! `/eve` sends the browser to EVE SSO with the scopes a grant link asks
 //! for and a random state, kept in the session (a guest gets one for it).
 //! `?add_to_account=1` remembers the signed-in user for the callback, until
-//! the session ends, as Laravel's session did. The callback checks the
+//! the session ends. The callback checks the
 //! state, trades the code, reads the character's corporation and alliance
 //! from ESI, stores the character and its token (when it carries scopes),
 //! and signs in: the account it is added to, the account it belongs to
@@ -44,7 +43,7 @@ pub async fn redirect(
         Some(list) => list.split(',').map(str::to_owned).collect(),
         None => Vec::new(),
     };
-    // FIXES.md, "An unknown scope in the login link was a server error".
+    // A scope the app does not know is the link's fault.
     if requested.iter().any(|scope| !scopes::is_known(scope)) {
         return Err(errors::http_error(StatusCode::BAD_REQUEST, "Bad Request"));
     }
@@ -201,9 +200,8 @@ pub async fn callback(
     Ok(response)
 }
 
-/// `createEsiToken`: the login's token with the scopes the app knows. A
-/// login without scopes stores nothing (FIXES.md, "Every scopeless login
-/// stored a token that was never used").
+/// The login's token with the scopes the app knows. A login without
+/// scopes stores nothing: the token could never be used.
 async fn store_token(state: &AppState, login: &Login) -> sqlx::Result<()> {
     let known: Vec<String> = login
         .scopes
@@ -300,8 +298,7 @@ async fn transfer(state: &AppState, character_id: i64, user_id: i64) -> sqlx::Re
 }
 
 /// Signs a user in with a new session token, carrying over what the old
-/// session held (Laravel's `Auth::login` migrates the session), with the
-/// character active.
+/// session held, with the character active.
 async fn sign_in(
     state: &AppState,
     viewer: &Viewer,
@@ -345,8 +342,7 @@ pub async fn logout(State(state): State<AppState>, viewer: Viewer) -> Result<Res
 }
 
 /// `GET /demo-login[?user=<id>]`: signs in as the demo pilot (or a given
-/// user) without EVE SSO when DEMO_ENABLED (FIXES.md, "The demo login");
-/// not found otherwise.
+/// user) without EVE SSO when DEMO_ENABLED; not found otherwise.
 pub async fn demo(
     State(state): State<AppState>,
     viewer: Viewer,

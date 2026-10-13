@@ -1,11 +1,10 @@
-//! The answers of the forms. Laravel redirected back and flashed the
-//! message into the session; the pages send fetch requests and get the
-//! outcome as JSON (FIXES.md, "Forms answer JSON"):
+//! The answers of the forms. The pages send fetch requests and get the
+//! outcome as JSON:
 //!
 //! - `200 {"redirect": path | null}`: where to go next (null: stay and
-//!   reload the page, Laravel's `back()`); the flash message waits in the
-//!   session for the next page's props;
-//! - `422 {"errors": {field: first message}}`, Inertia's errors bag;
+//!   reload the page); the flash message waits in the session for the
+//!   next page's props;
+//! - `422 {"errors": {field: first message}}`;
 //! - `401 {"message", "redirect": "/eve"}` for a guest, `403`, `404`,
 //!   `419` (another site) with `{"message"}`.
 
@@ -22,7 +21,7 @@ pub struct Done {
 }
 
 impl Done {
-    /// Stay on the page and reload it (Laravel's `back()`).
+    /// Stay on the page and reload it.
     pub fn back() -> Self {
         Self {
             redirect: None,
@@ -102,8 +101,7 @@ pub fn invalid_field(field: &str, message: &str) -> Response {
     invalid(errors)
 }
 
-/// A guest's form: the login, as Laravel's `auth` middleware redirected
-/// there.
+/// A guest's form: the login.
 pub fn unauthenticated() -> Response {
     (
         StatusCode::UNAUTHORIZED,
@@ -112,7 +110,7 @@ pub fn unauthenticated() -> Response {
         .into_response()
 }
 
-/// A plain redirect (the login, Laravel's `Route::redirect`).
+/// A plain redirect.
 pub fn redirect(location: &str) -> Response {
     (StatusCode::FOUND, [(header::LOCATION, location.to_owned())]).into_response()
 }

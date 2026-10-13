@@ -1,6 +1,5 @@
-// The route contract of the Laravel app (tests/fixtures/routes.json): the
-// pages a guest is sent away from, the pages a pilot and the admin see,
-// the error pages, `/settings`, the health page and the trailing slash.
+// The routes: the pages a guest is sent away from, the pages a pilot and
+// the admin see, the error pages, `/settings`, the health page and the trailing slash.
 import { expect, test } from '@playwright/test';
 
 import { createAdmin, createCharacter, createUser, resetDatabase, signIn } from './helpers.ts';
@@ -81,15 +80,4 @@ test('a trailing slash redirects to the page without it', async ({ request, base
   // SvelteKit's Location is relative to the URL with the slash.
   const target = new URL(response.headers().location, new URL('/dashboard/', baseURL));
   expect(target.pathname).toBe('/dashboard');
-});
-
-test('a stale Inertia tab reloads the page', async ({ request, baseURL }) => {
-  const response = await request.get('/admin/pilots?view=alliances', {
-    headers: { 'X-Inertia': 'true', 'X-Inertia-Version': 'old' },
-    maxRedirects: 0,
-  });
-  expect(response.status()).toBe(409);
-  expect(response.headers()['x-inertia-location']).toBe(
-    new URL('/admin/pilots?view=alliances', baseURL).href,
-  );
 });

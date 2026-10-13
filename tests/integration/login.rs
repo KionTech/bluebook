@@ -1,9 +1,7 @@
-//! The EVE login end to end against the mock SSO and ESI:
-//! tests/Feature/Auth/AffiliationSyncTest.php (the character's
-//! corporation and alliance stored on login),
-//! tests/Feature/Auth/CharacterTransferTest.php (a character moving to
-//! another account) and the callback's redirects, flashes, tokens and
-//! session.
+//! The EVE login end to end against the mock SSO and ESI: the
+//! character's corporation and alliance stored on login, a character
+//! moving to another account, and the callback's redirects, flashes,
+//! tokens and session.
 
 use serde_json::json;
 
@@ -53,8 +51,6 @@ fn esi_knows(app: &TestApp, character: i64, corporation: i64) {
     app.esi
         .corporation_json(corporation, esi_corporation_payload("Login Corp", None));
 }
-
-// AffiliationSyncTest.php
 
 #[tokio::test]
 async fn fetches_and_stores_corporation_and_alliance_details_on_login() {
@@ -120,8 +116,8 @@ async fn stores_a_character_with_no_alliance() {
     assert_eq!(app.count("alliances").await, 0);
 }
 
-// CharacterTransferTest.php: adding a character another account owns
-// (`addToAccount`), through the login with `add_to_account`.
+// Adding a character another account owns, through the login with
+// `add_to_account`.
 
 /// The new owner logs in with the character, adding it to the account.
 async fn add_to_account(app: &TestApp, new_owner: i64, character: i64) {
@@ -310,7 +306,6 @@ async fn a_login_with_scopes_stores_its_token() {
     );
 }
 
-/// FIXES.md, "Every scopeless login stored a token that was never used".
 #[tokio::test]
 async fn a_login_without_scopes_stores_no_token() {
     let app = TestApp::new().await;

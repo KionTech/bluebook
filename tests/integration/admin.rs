@@ -1,14 +1,12 @@
-//! tests/Feature/Admin/AdministrationTest.php and
-//! StandingRequestDisplayTest.php: the overview, resolving requests, the
-//! Discord settings, the requests list and the pilots behind the admin
-//! gate.
+//! The admin console: the overview, resolving requests, the Discord
+//! settings, the requests list and the pilots behind the admin gate.
 
 use serde_json::json;
 
 use crate::common::factories::{NewCharacter, NewRequest, Owner};
 use crate::common::{Browser, TestApp, assert_json_eq};
 
-/// `administrationAdmin()`: a user owning the configured admin character.
+/// A user owning the configured admin character.
 async fn admin(app: &mut TestApp) -> Browser {
     let user = app.user().await;
     let character = app.character_of(user).await;
@@ -317,7 +315,6 @@ async fn paginates_the_standing_requests_list() {
     assert_eq!(props["standingRequests"]["total"], 30);
 }
 
-/// StandingRequestDisplayTest.php.
 #[tokio::test]
 async fn passes_the_inherited_effective_standing_for_each_request_to_the_admin_console() {
     let mut app = TestApp::new().await;
@@ -358,8 +355,6 @@ async fn passes_the_inherited_effective_standing_for_each_request_to_the_admin_c
     );
 }
 
-/// FIXES.md, "Requests named the requester's corporation, not the one
-/// asked for".
 #[tokio::test]
 async fn names_a_request_by_its_subject_after_the_requester_moved() {
     let mut app = TestApp::new().await;

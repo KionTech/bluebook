@@ -1,7 +1,6 @@
 // Shared helpers for the e2e suite: everything talks to the docker stack,
 // so the database is seeded and inspected through psql in the
-// bluebook-postgres container, the way the Pest browser tests used the
-// factories and `actingAs`. The stack's admin is character 2100000001
+// bluebook-postgres container. The stack's admin is character 2100000001
 // (EVE_ADMIN_CHARACTER_ID in docker-compose.yml).
 import { createHash, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -23,7 +22,7 @@ export function quote(value: string | null): string {
   return value === null ? 'null' : `'${value.replaceAll("'", "''")}'`;
 }
 
-/** Laravel's RefreshDatabase: every table empty, ids from 1. */
+/** Every table empty, ids from 1. */
 export function resetDatabase(): void {
   psql(
     `truncate alliances, corporations, factions, users, characters, esi_tokens, source_contacts,
@@ -34,7 +33,7 @@ export function resetDatabase(): void {
 
 let sequence = 0;
 
-/** `User::factory()->create()`; `setUp: false` is `withoutSetup()`. */
+/** A user; `setUp: false` for one who has not been through the setup. */
 export function createUser(attributes: { name?: string; setUp?: boolean } = {}): number {
   sequence += 1;
   const name = attributes.name ?? `Test User ${sequence}`;
@@ -57,7 +56,7 @@ export type CharacterAttributes = {
   shouldSync?: boolean;
 };
 
-/** `Character::factory()->create([...])`. */
+/** A character; unset fields get defaults. */
 export function createCharacter(attributes: CharacterAttributes = {}): number {
   sequence += 1;
   const id = attributes.id ?? 95_000_000 + sequence;
@@ -129,7 +128,7 @@ export function createSourceContact(
   );
 }
 
-/** `StandingRequest::factory()->for($character)->create([...])`. */
+/** A standing request by the character. */
 export function createStandingRequest(
   character: number,
   attributes: { status?: string; subjectType?: string; subjectId?: number } = {},
@@ -151,7 +150,7 @@ export function createAdmin(name = 'Admin Pilot'): number {
   return user;
 }
 
-/** Laravel's `actingAs`: a session for the user, its cookie in the
+/** Signs the user in: a session for the user, its cookie in the
  * browser. */
 export async function signIn(
   context: BrowserContext,
@@ -177,7 +176,7 @@ export async function signIn(
   ]);
 }
 
-/** Pest's `assertNoSmoke`: no JavaScript errors and no console errors
+/** No JavaScript errors and no console errors
  * on the page, apart from the browser's own line for a 422 answer (a
  * form with errors). */
 export function watchForErrors(page: Page): () => void {

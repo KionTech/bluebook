@@ -1,5 +1,5 @@
 <script lang="ts">
-  // The document title as Inertia's <Head> built it.
+  // The document title: "<page> - <app name>".
   import { page } from '$app/state';
 
   import { pageTitle } from '#lib/title.ts';

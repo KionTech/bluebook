@@ -1,15 +1,15 @@
 // Forms as the api answers them: the fields go as JSON to the URL and
 // method the site always used. `200 {"redirect"}` either stays (reload the
-// page's data, Laravel's `back()`) or goes to a path; `422 {"errors"}`
+// page's data) or goes to a path; `422 {"errors"}`
 // holds each field's message; a guest is sent to the login (`401` with
 // its URL, a full page load); anything else becomes an error toast. The
 // flash message arrives with the reloaded page.
-import { goto, refreshAll } from "$app/navigation";
+import { goto, refreshAll } from '$app/navigation';
 
-import { errorTitle } from "#lib/errors.ts";
-import { toaster } from "#lib/toaster.svelte.ts";
+import { errorTitle } from '#lib/errors.ts';
+import { toaster } from '#lib/toaster.svelte.ts';
 
-export type FormMethod = "POST" | "PUT" | "PATCH" | "DELETE";
+export type FormMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** What a form needs from SvelteKit, the browser and the toaster; tests
  * pass fakes. */
@@ -37,7 +37,7 @@ function defaults(environment: Partial<FormEnvironment>): FormEnvironment {
     leave: (url) => {
       window.location.href = url;
     },
-    error: (message) => toaster.add("error", message),
+    error: (message) => toaster.add('error', message),
     ...environment,
   };
 }
@@ -55,8 +55,8 @@ export async function send(
     response = await env.fetch(url, {
       method,
       headers: {
-        "content-type": "application/json",
-        accept: "application/json",
+        'content-type': 'application/json',
+        accept: 'application/json',
       },
       body: JSON.stringify(payload),
     });
@@ -77,14 +77,14 @@ export async function send(
     return { ok: false, errors: body.errors ?? {} };
   }
   if (response.status === 401) {
-    env.leave(body.redirect ?? "/eve");
+    env.leave(body.redirect ?? '/eve');
   } else {
     env.error(body.message ?? errorTitle(response.status));
   }
   return { ok: false, errors: {} };
 }
 
-/** A form's fields and state, Inertia's useForm for this protocol. */
+/** A form's fields and state. */
 export class Form<T extends Record<string, unknown>> {
   data: T;
   errors: Record<string, string> = $state({});

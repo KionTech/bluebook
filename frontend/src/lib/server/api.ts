@@ -1,6 +1,6 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, redirect } from '@sveltejs/kit';
 
-import { errorMessage } from "#lib/errors.ts";
+import { errorMessage } from '#lib/errors.ts';
 
 /** The status codes SvelteKit's `redirect` accepts. */
 type RedirectStatus = 300 | 301 | 302 | 303 | 304 | 305 | 306 | 307 | 308;
@@ -12,17 +12,11 @@ type RedirectStatus = 300 | 301 | 302 | 303 | 304 | 305 | 306 | 307 | 308;
  * other non-OK status the error page for that status, with the api's
  * message where the page shows one.
  */
-export async function apiGet<T>(
-  fetch: typeof globalThis.fetch,
-  path: string,
-): Promise<T> {
-  const response = await fetch(path, { redirect: "manual" });
+export async function apiGet<T>(fetch: typeof globalThis.fetch, path: string): Promise<T> {
+  const response = await fetch(path, { redirect: 'manual' });
 
   if (response.status >= 300 && response.status < 400) {
-    redirect(
-      response.status as RedirectStatus,
-      sitePath(response.headers.get("location")),
-    );
+    redirect(response.status as RedirectStatus, sitePath(response.headers.get('location')));
   }
 
   if (!response.ok) {
@@ -37,9 +31,9 @@ export async function apiGet<T>(
  * becomes its path. */
 export function sitePath(location: string | null): string {
   if (!location) {
-    return "/";
+    return '/';
   }
-  if (location.startsWith("/")) {
+  if (location.startsWith('/')) {
     return location;
   }
   return location;
@@ -48,17 +42,11 @@ export function sitePath(location: string | null): string {
 /** The props endpoint of a page URL: `/api/pages` plus its path, the home
  * page at `/api/pages/home`. */
 export function pagesPath(url: URL): string {
-  const path = url.pathname === "/" ? "/home" : url.pathname;
+  const path = url.pathname === '/' ? '/home' : url.pathname;
   return `/api/pages${path}${url.search}`;
 }
 
 /** The load of every page: its props from the api. */
-export function loadPage<T>({
-  fetch,
-  url,
-}: {
-  fetch: typeof globalThis.fetch;
-  url: URL;
-}) {
+export function loadPage<T>({ fetch, url }: { fetch: typeof globalThis.fetch; url: URL }) {
   return apiGet<T>(fetch, pagesPath(url));
 }

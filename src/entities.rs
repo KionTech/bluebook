@@ -1,6 +1,6 @@
 //! The locally known EVE entities (characters, corporations, alliances),
-//! created and refreshed from ESI's public endpoints
-//! (`EveEntityService`), and the hourly `characters:sync-affiliations`.
+//! created and refreshed from ESI's public endpoints, and the hourly
+//! affiliation refresh.
 
 use std::collections::HashMap;
 
@@ -85,7 +85,7 @@ pub async fn refresh_corporation(state: &AppState, id: i64) -> sqlx::Result<()> 
 async fn fill_corporation(state: &AppState, id: i64) -> sqlx::Result<()> {
     let now = state.clock.now();
     let Ok(corporation) = state.esi.corporation(id).await else {
-        // The row exists afterwards either way, as Laravel saved it.
+        // The row exists afterwards either way.
         sqlx::query(
             "insert into corporations (id, created_at, updated_at) values ($1, $2, $2)
              on conflict (id) do nothing",
@@ -265,7 +265,7 @@ async fn run_affiliations(state: &AppState) -> sqlx::Result<(usize, usize)> {
             .map(|(id, _)| *id)
             .collect()
     };
-    // The order MySQL's user index gave: by account, then id.
+    // By account, then id.
     let mut character_ids: Vec<i64> = sqlx::query_scalar(
         "select id from characters where user_id is not null order by user_id, id",
     )

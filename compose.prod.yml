@@ -18,8 +18,8 @@
 # DATABASE_URL is required; EVE_CLIENT_ID and EVE_CLIENT_SECRET (the CCP
 # application, callback https://bluebook.nicolaskion.dev/eve/callback),
 # EVE_ADMIN_CHARACTER_ID and DISCORD_STANDING_REQUEST_WEBHOOK belong there
-# too. The schedule writes to the pilots' in-game contacts: it stays off
-# until Laravel's scheduler and queue workers are stopped for good.
+# too. The schedule writes to the pilots' in-game contacts and runs only
+# with SCHEDULER_ENABLED=true.
 
 x-logging: &logging
   driver: json-file

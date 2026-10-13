@@ -1,7 +1,5 @@
-//! tests/Feature/StandingRequests/StandingRequestTest.php (asking for a
-//! standing, the Discord announcement) and EffectiveStandingResolverTest.php
-//! (the standing a request's subject already has, as the admin's request
-//! list shows it).
+//! Asking for a standing, the Discord announcement, and the standing a
+//! request's subject already has, as the admin's request list shows it.
 
 use serde_json::{Value, json};
 
@@ -195,8 +193,6 @@ async fn posts_a_standing_request_to_the_configured_discord_webhook_and_pings_th
     );
 }
 
-/// FIXES.md, "Requests named the requester's corporation, not the one
-/// asked for".
 #[tokio::test]
 async fn announces_a_request_by_its_subject_after_the_requester_moved() {
     let app = TestApp::new().await;
@@ -276,7 +272,8 @@ async fn falls_back_to_the_webhook_of_the_environment() {
     assert_eq!(requests[0].json()["allowed_mentions"], json!(null));
 }
 
-// EffectiveStandingResolverTest.php, through the admin's request list.
+// The effective standing of a request's subject, through the admin's
+// request list.
 
 async fn effective_standing(app: &mut TestApp, character: i64) -> Value {
     app.standing_request(NewRequest {

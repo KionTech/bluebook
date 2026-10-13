@@ -1,14 +1,13 @@
-//! The stored EVE SSO tokens, as `nicolaskion/eve`'s connector used them:
-//! the character's newest token carrying the scope, refreshed first when
-//! it expires within five minutes (the rotated refresh token stored).
+//! The stored EVE SSO tokens: the character's newest token carrying the scope,
+//! refreshed first when it expires within five minutes (the rotated refresh
+//! token stored).
 //!
 //! A token is deleted only when it is certainly dead: EVE answers the
 //! refresh with `invalid_grant`, or ESI answers 401 right after a fresh
 //! refresh (`esi.rs`). Any other failure keeps the token and marks it
 //! failing (`failing_since`, the first failure in a row, and
 //! `last_failure`); the next success clears the mark. A token failing for
-//! `LONG_FAILING` counts as lapsed for the warnings and the token mail
-//! (FIXES.md, "Tokens were thrown away on any failure").
+//! `LONG_FAILING` counts as lapsed for the warnings and the token mail.
 
 use std::fmt;
 

@@ -1,8 +1,0 @@
-{
-  "user": null,
-  "character": null,
-  "path": "/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1,esi-characters.write_contacts.v1",
-  "sql": [],
-  "status": 302,
-  "location": "https://login.eveonline.com/v2/oauth/authorize/?client_id=reference-client-id&redirect_uri=https%3A%2F%2Fbluebook.nicolaskion.dev%2Feve%2Fcallback&scope=esi-characters.read_contacts.v1+esi-characters.write_contacts.v1&response_type=code&state=cIa4PBoBOlSFznYU89NFeE1S8ZUSh3DK5jfNd1QG"
-}

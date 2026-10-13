@@ -1,4 +1,4 @@
-//! The admin area behind `can:standings.admin`: the overview, the standing
+//! The admin area behind the admin gate: the overview, the standing
 //! requests, the pilots, the settings, and their forms (the source, the
 //! sync now, resolving a request, the Discord settings).
 
@@ -74,8 +74,8 @@ struct GroupRow {
     alliance_id: Option<i64>,
 }
 
-/// `StandingRequestResource` of the requests a query selects (with the
-/// requester's names), with their effective standing.
+/// The requests a query selects (with the requester's names), with their
+/// effective standing.
 async fn requests(
     state: &AppState,
     filter: &str,
@@ -253,8 +253,8 @@ async fn registered_characters(
     Ok(rows.into_iter().map(Character::from_row).collect())
 }
 
-/// `LIKE '%term%'` with the term taken literally (FIXES.md, "Percent and
-/// underscore in the pilot search were wildcards").
+/// `LIKE '%term%'` with the term taken literally: percent and underscore
+/// are no wildcards.
 fn like_pattern(term: &str) -> String {
     let escaped = term
         .replace('\\', "\\\\")
@@ -426,8 +426,7 @@ fn label(kind: &str) -> String {
 /// for a source type, the entity it gives): the account's admin
 /// characters, the active one first, holding the scope (and having that
 /// entity); else the active character when it is an admin; else the
-/// first admin character. FIXES.md, "The source came from the active
-/// character, not an admin character".
+/// first admin character.
 async fn admin_character(
     state: &AppState,
     account: &Account,
@@ -616,8 +615,8 @@ pub async fn sync_source(
     if crate::standings::sync::run(&state, true).await == 0 {
         back_with(&state, &viewer, "success", "Standings sync started.").await
     } else {
-        // FIXES.md, ""Sync now" said the sync started when the source
-        // could not be read".
+        // The source could not be read: say so instead of claiming a
+        // sync started.
         back_with(
             &state,
             &viewer,
@@ -672,8 +671,7 @@ pub async fn resolve_request(
     back_with(&state, &viewer, "success", "Standing request updated.").await
 }
 
-/// Laravel's `url` rule, as far as a webhook needs it: an absolute URL
-/// with a host.
+/// A webhook URL: absolute, with a host.
 fn is_url(value: &str) -> bool {
     url::Url::parse(value).is_ok_and(|url| url.has_host())
 }

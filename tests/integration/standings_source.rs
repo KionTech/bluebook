@@ -1,6 +1,5 @@
-//! tests/Feature/Standings/StandingsSourceServiceTest.php: reading the
-//! source's contacts into the canonical standings, storing their entities
-//! and closing requests that got a blue standing.
+//! Reading the source's contacts into the canonical standings, storing
+//! their entities and closing requests that got a blue standing.
 
 use serde_json::json;
 
@@ -10,7 +9,7 @@ use crate::common::{
     assert_json_eq,
 };
 
-/// `adminReader()`: an admin character that can read a source.
+/// An admin character that can read a source.
 async fn admin_reader(app: &mut TestApp, kind: &str, entity_id: i64, scope: &str) -> i64 {
     let mut new = NewCharacter::default();
     match kind {
@@ -283,7 +282,6 @@ async fn reads_every_page_of_the_contacts() {
     assert_eq!(app.count("source_contacts").await, 5);
 }
 
-/// FIXES.md, "Orderings without an ORDER BY".
 #[tokio::test]
 async fn the_first_admin_by_id_reads_the_source() {
     let mut app = TestApp::new().await;

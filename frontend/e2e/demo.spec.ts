@@ -1,6 +1,5 @@
-// The local demo login (FIXES.md, "The demo login"): the stack seeds the
-// demo pilots, the home page links the login, and it signs in without EVE
-// SSO.
+// The local demo login: the stack seeds the demo pilots, the home page
+// links the login, and it signs in without EVE SSO.
 import { execFileSync } from 'node:child_process';
 
 import { expect, test } from '@playwright/test';

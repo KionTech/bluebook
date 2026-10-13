@@ -1,6 +1,5 @@
-//! The ESI scopes: every scope the login may ask for (the scope catalogue
-//! of `nicolaskion/eve`), the ones the app uses, and the grant links that
-//! ask EVE for them.
+//! The ESI scopes: every scope the login may ask for, the ones the app uses,
+//! and the grant links that ask EVE for them.
 
 pub const PUBLIC_DATA: &str = "publicData";
 pub const READ_CHARACTER_CONTACTS: &str = "esi-characters.read_contacts.v1";
@@ -115,7 +114,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn builds_the_grant_links_like_laravels_route_helper() {
+    fn builds_the_grant_links() {
         assert_eq!(
             grant_url("https://bluebook.nicolaskion.dev", &SYNC_SCOPES),
             "https://bluebook.nicolaskion.dev/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1"

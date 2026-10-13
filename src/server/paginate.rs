@@ -1,10 +1,11 @@
-//! Laravel's `LengthAwarePaginator` as JSON, with `withQueryString()`: the
-//! links keep the request's other query parameters and put `page` last.
+//! A page of a list as JSON (`current_page`, `data`, the links and the
+//! counts): the links keep the request's other query parameters and put
+//! `page` last.
 
 use serde_json::{Value, json};
 
 /// The page a request asks for: `?page=` when it is a whole number of at
-/// least 1, else the first (Laravel's `resolveCurrentPage`).
+/// least 1, else the first.
 pub fn current_page(query: &[(String, String)]) -> i64 {
     query
         .iter()
@@ -14,7 +15,7 @@ pub fn current_page(query: &[(String, String)]) -> i64 {
         .unwrap_or(1)
 }
 
-/// RFC 3986 encoding, as `http_build_query` with `PHP_QUERY_RFC3986`.
+/// RFC 3986 encoding of a query value.
 fn encode(value: &str) -> String {
     let mut out = String::new();
     for byte in value.bytes() {
@@ -57,8 +58,8 @@ impl Paginator<'_> {
         format!("{}?{}", self.path, parts.join("&"))
     }
 
-    /// The numbered links: every page up to 13, else Laravel's window of
-    /// three pages around the current one and two at each end, with `...`
+    /// The numbered links: every page up to 13, else a window of three
+    /// pages around the current one and two at each end, with `...`
     /// between.
     fn numbered(&self) -> Vec<Option<i64>> {
         let last = self.last_page();

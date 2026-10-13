@@ -1,5 +1,5 @@
-//! The Discord webhook (`NotifyStandingRequest`, `NotifySourceUnreadable`):
-//! the webhook of the admin settings, else DISCORD_STANDING_REQUEST_WEBHOOK;
+//! The Discord messages (new standing requests, an unreadable source): the
+//! webhook of the admin settings, else DISCORD_STANDING_REQUEST_WEBHOOK;
 //! the role of the settings is pinged. The answer is not looked at.
 
 use serde_json::{Value, json};
@@ -127,9 +127,8 @@ pub async fn notify_request(state: &AppState, standing_request_id: i64) -> Resul
     Ok(())
 }
 
-/// Alerts that the source cannot be read, with the admin grant link
-/// (FIXES.md, "The "source unreadable" alert linked a login without
-/// scopes").
+/// Alerts that the source cannot be read, with the admin grant link so
+/// an admin can grant the missing scopes in one click.
 pub async fn notify_unreadable(state: &AppState) -> Result<(), String> {
     let (webhook, role) = settings(state).await.map_err(|error| error.to_string())?;
     let Some(webhook) = webhook else {

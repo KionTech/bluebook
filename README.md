@@ -1,6 +1,7 @@
 # Bluebook
 
 [![CI](https://github.com/KionTech/bluebook/actions/workflows/ci.yml/badge.svg)](https://github.com/KionTech/bluebook/actions/workflows/ci.yml)
+[![Release](https://github.com/KionTech/bluebook/actions/workflows/release.yml/badge.svg)](https://github.com/KionTech/bluebook/actions/workflows/release.yml)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fbluebook.nicolaskion.dev&label=bluebook.nicolaskion.dev)](https://bluebook.nicolaskion.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
 [![Rust](https://img.shields.io/badge/Rust-Axum-DEA584?logo=rust&logoColor=white)](https://github.com/tokio-rs/axum)
@@ -62,8 +63,7 @@ standings and a few requests; `/demo-login` signs in as the demo pilot,
 who is an admin in this stack. Nothing talks to EVE unless you configure
 an EVE application and set `SCHEDULER_ENABLED=true`.
 
-The local preview behind portal
-runs on https://bluebook.test:
+The local preview behind portal runs on https://bluebook.test:
 
 ```bash
 APP_URL=https://bluebook.test ORIGIN=https://bluebook.test docker compose up --build -d
@@ -85,29 +85,40 @@ also run once as commands: `cargo run --bin sync_standings [-- --force]`,
 ## Testing
 
 ```bash
-cargo test                      # API, against the bluebook_test database
-cd frontend
-npm run check && npm run lint && npm run format:check
-npm test                        # vitest
-npx playwright test             # against the running stack on :5315
+docker compose up -d postgres
+cargo test
+cd frontend && npm run check && npm run lint && npm run format:check && npm test
+docker compose up --build -d && cd frontend && npm run test:e2e
 ```
 
-The API suites drive the real router against local mock servers for
-ESI, EVE SSO and Discord on ephemeral ports.
+The Rust suites drive the real router on their own `bluebook_test`
+database with a fixed clock, against local mocks of ESI, EVE SSO and
+Discord. They pin every page's props, every form with its messages and
+changed rows, and every call the scheduled tasks and jobs make. The
+vitest suites run next to the code, and Playwright runs against the
+composed stack on port 5315, with screenshot baselines of the design
+that only run locally.
 
 ## Deployment
 
-Production runs on Coolify from `compose.prod.yml`: `bluebook-api`,
-`bluebook-frontend` and `bluebook-proxy`, images built by
-`.github/workflows/release.yml` and pushed to
-`ghcr.io/kiontech/bluebook-<service>`. Only the proxy gets the domain
-https://bluebook.nicolaskion.dev; the api reaches the shared Postgres
-over Coolify's network and runs its migrations on startup. The
-environment needs `DATABASE_URL`, `EVE_CLIENT_ID`, `EVE_CLIENT_SECRET`,
-`EVE_ADMIN_CHARACTER_ID` and optionally `DISCORD_STANDING_REQUEST_WEBHOOK`;
+Coolify deploys `compose.prod.yml`:
+
+1. A merge to main runs `.github/workflows/release.yml`, which builds the
+   api, frontend and proxy images and pushes them to
+   `ghcr.io/kiontech/bluebook-*` (`latest` and the commit).
+2. The workflow then calls Coolify's deploy webhook (`COOLIFY_WEBHOOK`,
+   `COOLIFY_TOKEN`), and Coolify pulls the images and restarts the
+   services.
+3. The api runs its migrations on startup.
+
+Only the proxy has a domain, https://bluebook.nicolaskion.dev; Traefik
+terminates TLS in front of it. The api reaches the shared Coolify
+Postgres over the `coolify` network. `DATABASE_URL`, `EVE_CLIENT_ID`,
+`EVE_CLIENT_SECRET`, `EVE_ADMIN_CHARACTER_ID` and optionally
+`DISCORD_STANDING_REQUEST_WEBHOOK` are Coolify environment variables;
 `SCHEDULER_ENABLED=true` switches the schedule on.
 
-## Project layout
+## Layout
 
 ```
 src/auth/          session, EVE SSO, login, ESI tokens
@@ -121,6 +132,7 @@ src/server/        router, page props and forms
 src/bin/           migrate, seed_demo and the scheduled tasks as commands
 migrations/        the Postgres schema
 frontend/          the SvelteKit app
+tests/integration/ the Rust suites, one binary
 deploy/            the Caddyfile and the proxy image
 ```
 

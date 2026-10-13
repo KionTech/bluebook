@@ -1,5 +1,5 @@
-//! Health checks: Laravel's `/up` (its page, or `{"status":"up"}` for a
-//! JSON client) and the deploy check `/api/health`.
+//! Health checks: `/up` (a page, or `{"status":"up"}` for a JSON client)
+//! and the deploy check `/api/health`.
 
 use std::time::Instant;
 
@@ -12,7 +12,7 @@ use serde_json::json;
 use super::AppState;
 use super::errors::{escape, expects_json};
 
-/// Laravel's health page (`withRouting(health: '/up')`).
+/// The health page.
 const UP_PAGE: &str = include_str!("up.html");
 
 pub async fn up(State(state): State<AppState>, headers: HeaderMap) -> Response {

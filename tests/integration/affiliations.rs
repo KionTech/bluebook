@@ -1,5 +1,4 @@
-//! tests/Feature/Console/SyncCharacterAffiliationsCommandTest.php: the
-//! hourly refresh of the characters' and contacts' corporations and
+//! The hourly refresh of the characters' and contacts' corporations and
 //! alliances.
 
 use serde_json::json;

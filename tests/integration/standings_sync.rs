@@ -1,6 +1,5 @@
-//! tests/Feature/Console/SyncStandingsCommandTest.php: the five-minute
-//! `standings:sync`, its fan-out to the characters, the downtime skip and
-//! the Discord alert for an unreadable source.
+//! The five-minute standings sync, its fan-out to the characters, the
+//! downtime skip and the Discord alert for an unreadable source.
 
 use serde_json::json;
 use time::macros::datetime;
@@ -39,7 +38,7 @@ async fn syncable(app: &TestApp) -> i64 {
     character
 }
 
-/// The source answers one character contact, as the PHP tests faked it.
+/// The source answers one character contact.
 fn one_contact(app: &TestApp) {
     app.esi
         .contacts("corporations/2000", &[(100, "character", 5.0)]);
@@ -184,8 +183,6 @@ async fn posts_a_source_unreadable_alert_to_the_discord_webhook() {
     assert!(body.contains("Click here to re-authenticate"), "{body}");
 }
 
-/// FIXES.md, "The "source unreadable" alert linked a login without
-/// scopes".
 #[tokio::test]
 async fn the_unreadable_alert_links_the_admin_grant() {
     let app = TestApp::new().await;

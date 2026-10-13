@@ -1,5 +1,5 @@
-//! tests/Feature/SetupWizardTest.php: the first-login wizard, shown until
-//! a main character is picked or the wizard is skipped.
+//! The first-login wizard, shown until a main character is picked or the
+//! wizard is skipped.
 
 use serde_json::json;
 

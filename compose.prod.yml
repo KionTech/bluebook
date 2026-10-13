@@ -1,0 +1,96 @@
+# Production, a Coolify Docker Compose resource (this file), deployed
+# from the images .github/workflows/release.yml pushes to GHCR on every
+# merge to main.
+#
+# Only bluebook-proxy gets a domain: in Coolify set its "Domains" to
+# https://bluebook.nicolaskion.dev and leave the api and frontend without
+# one. Traefik terminates TLS and hands plain HTTP to the proxy on :80,
+# which routes to the api and the frontend (deploy/Caddyfile).
+#
+# The api also joins Coolify's external `coolify` network to reach the
+# shared Postgres, a Coolify database (its host is in DATABASE_URL). Other
+# apps share that network, so a plain `api` would be ambiguous there:
+# every service carries the app prefix, and the proxy finds its upstreams
+# through API_HOST and FRONTEND_HOST. The frontend and the proxy stay on
+# the default network only. The api runs its migrations on startup.
+#
+# Coolify fills in the ${VAR}s from the resource's environment variables:
+# DATABASE_URL is required; EVE_CLIENT_ID and EVE_CLIENT_SECRET (the CCP
+# application, callback https://bluebook.nicolaskion.dev/eve/callback),
+# EVE_ADMIN_CHARACTER_ID and DISCORD_STANDING_REQUEST_WEBHOOK belong there
+# too. The schedule writes to the pilots' in-game contacts and runs only
+# with SCHEDULER_ENABLED=true.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  bluebook-api:
+    image: ghcr.io/kiontech/bluebook-api:latest
+    pull_policy: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}
+      BIND_ADDR: 0.0.0.0:3000
+      APP_URL: ${APP_URL:-https://bluebook.nicolaskion.dev}
+      APP_NAME: ${APP_NAME:-}
+      RUST_LOG: ${RUST_LOG:-info}
+      EVE_CLIENT_ID: ${EVE_CLIENT_ID:-}
+      EVE_CLIENT_SECRET: ${EVE_CLIENT_SECRET:-}
+      EVE_CALLBACK_URL: ${EVE_CALLBACK_URL:-https://bluebook.nicolaskion.dev/eve/callback}
+      EVE_ADMIN_CHARACTER_ID: ${EVE_ADMIN_CHARACTER_ID:-}
+      DISCORD_STANDING_REQUEST_WEBHOOK: ${DISCORD_STANDING_REQUEST_WEBHOOK:-}
+      ESI_USER_AGENT: ${ESI_USER_AGENT:-}
+      ESI_MAX_RPS: ${ESI_MAX_RPS:-}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-}
+      SESSION_LIFETIME_DAYS: ${SESSION_LIFETIME_DAYS:-}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-false}
+      # No demo login on the live site.
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+    # The image has no curl or wget; bash talks HTTP to /up itself.
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - "exec 3<>/dev/tcp/127.0.0.1/3000 && printf 'GET /up HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - default
+      - coolify
+    restart: unless-stopped
+    logging: *logging
+
+  bluebook-frontend:
+    image: ghcr.io/kiontech/bluebook-frontend:latest
+    pull_policy: always
+    environment:
+      AXUM_URL: http://bluebook-api:3000
+      ORIGIN: ${APP_URL:-https://bluebook.nicolaskion.dev}
+      # The scheme of page URLs, from the proxy.
+      PROTOCOL_HEADER: x-forwarded-proto
+    depends_on:
+      - bluebook-api
+    restart: unless-stopped
+    logging: *logging
+
+  bluebook-proxy:
+    image: ghcr.io/kiontech/bluebook-proxy:latest
+    pull_policy: always
+    environment:
+      API_HOST: bluebook-api
+      FRONTEND_HOST: bluebook-frontend
+    depends_on:
+      - bluebook-api
+      - bluebook-frontend
+    restart: unless-stopped
+    logging: *logging
+
+networks:
+  coolify:
+    external: true

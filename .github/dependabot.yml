@@ -1,42 +1,40 @@
 version: 2
+
+# Once a month, one grouped PR per ecosystem for minor and patch updates.
+# Major updates come as their own PRs and are merged by hand.
 updates:
-  - package-ecosystem: composer
+  - package-ecosystem: cargo
     directory: /
     schedule:
       interval: monthly
-      time: '06:00'
-      timezone: Europe/Berlin
-    open-pull-requests-limit: 10
     groups:
-      composer-minor-and-patch:
-        patterns:
-          - '*'
-        update-types:
-          - minor
-          - patch
+      cargo-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
-    directory: /
+    directory: /frontend
     schedule:
       interval: monthly
-      time: '06:00'
-      timezone: Europe/Berlin
-    open-pull-requests-limit: 10
     groups:
       npm-minor-and-patch:
-        patterns:
-          - '*'
-        update-types:
-          - minor
-          - patch
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/, /frontend]
+    schedule:
+      interval: monthly
+    groups:
+      docker-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
-      time: '06:00'
-      timezone: Europe/Berlin
     groups:
-      github-actions:
-        patterns:
-          - '*'
+      github-actions-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]

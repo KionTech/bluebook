@@ -1,0 +1,213 @@
+//! The HTTP side: shared state, the router and the cross-cutting layers.
+//! Pages are rendered by SvelteKit; the api serves their props as JSON
+//! (`/api/pages/*`), the EVE login, and every form the pages send, at the
+//! URL and method the site always used.
+
+pub mod account;
+pub mod admin;
+pub mod answer;
+pub mod characters;
+pub mod dashboard;
+pub mod errors;
+pub mod health;
+pub mod input;
+pub mod pages;
+pub mod paginate;
+pub mod viewer;
+
+use std::sync::Arc;
+
+use axum::Router;
+use axum::extract::Request;
+use axum::http::{HeaderMap, Method, StatusCode, header};
+use axum::middleware::Next;
+use axum::response::Response;
+use axum::routing::{any, get, post, put};
+use sqlx::PgPool;
+use tokio::sync::Notify;
+use tower_http::normalize_path::NormalizePath;
+
+use crate::auth::sso::SsoClient;
+use crate::clock::Clock;
+use crate::config::Config;
+use crate::esi::EsiClient;
+
+/// The default bind address of the API server; the SvelteKit dev proxy and
+/// the reverse proxy point at it.
+const DEFAULT_BIND_ADDR: &str = "127.0.0.1:3000";
+
+/// The listen address from `BIND_ADDR`, with the local default.
+pub fn bind_addr() -> String {
+    std::env::var("BIND_ADDR").unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_owned())
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub config: Arc<Config>,
+    pub clock: Clock,
+    pub esi: EsiClient,
+    pub sso: SsoClient,
+    /// Wakes the queue workers when a job is queued.
+    pub jobs: Arc<Notify>,
+}
+
+impl AppState {
+    pub fn new(pool: PgPool, config: Config, clock: Clock) -> Self {
+        Self {
+            pool,
+            esi: EsiClient::new(&config.esi),
+            sso: SsoClient::new(config.eve.clone(), &config.esi.user_agent),
+            config: Arc::new(config),
+            clock,
+            jobs: Arc::new(Notify::new()),
+        }
+    }
+}
+
+/// The whole app. A trailing slash reaches the same route, as it did.
+/// Error answers are rendered for the client around the routing, so they
+/// see every answer as the router finished it (the `Allow` header of a
+/// 405 included).
+pub fn router(state: AppState) -> Router {
+    let routes = routes(state);
+    let app = tower::ServiceBuilder::new()
+        .layer(axum::middleware::from_fn(errors::negotiate))
+        .service(NormalizePath::trim_trailing_slash(routes));
+    Router::new().fallback_service(app)
+}
+
+fn routes(state: AppState) -> Router {
+    use crate::auth::login;
+    Router::new()
+        .route("/up", get(health::up))
+        // The EVE login and the local demo login.
+        .route("/eve", get(login::redirect))
+        .route("/eve/callback", get(login::callback))
+        .route("/demo-login", get(login::demo))
+        .route("/logout", post(login::logout))
+        // The pilot's forms.
+        .route("/standings/sync", post(characters::sync_now))
+        .route("/standings/{character}", put(characters::update_sync))
+        .route(
+            "/standings/{character}/request",
+            post(characters::request_standing),
+        )
+        .route(
+            "/auth/character/{character}",
+            put(characters::switch).delete(characters::destroy),
+        )
+        .route(
+            "/auth/character/{character}/main",
+            put(characters::set_main),
+        )
+        .route("/setup/complete", post(characters::complete_setup))
+        .route("/settings", any(characters::settings_redirect))
+        // The admin's forms.
+        .route("/admin/standings", put(admin::update_source))
+        .route("/admin/standings/sync", post(admin::sync_source))
+        .route(
+            "/admin/standing-requests/{standing_request}",
+            put(admin::resolve_request),
+        )
+        .route("/admin/discord-settings", put(admin::update_discord))
+        // Signed file links; nothing is stored, so every signature is
+        // invalid.
+        .route("/storage/{*path}", get(storage).put(storage))
+        // The pages are SvelteKit's; any other method is not allowed.
+        .route("/", get(page_elsewhere))
+        .route("/dashboard", get(page_elsewhere))
+        .route("/settings/appearance", get(page_elsewhere))
+        .route("/admin", get(page_elsewhere))
+        .route("/admin/standing-requests", get(page_elsewhere))
+        .route("/admin/pilots", get(page_elsewhere))
+        .route("/admin/settings", get(page_elsewhere))
+        .nest("/api", api_router())
+        .fallback(errors::not_found)
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            viewer::resolve,
+        ))
+        .layer(axum::middleware::from_fn(reject_cross_site_mutations))
+        .with_state(state)
+}
+
+/// One props endpoint per page, at the page's own path under
+/// `/api/pages` (the home page is `/api/pages/home`), and the health
+/// check.
+fn api_router() -> Router<AppState> {
+    Router::new()
+        .route("/health", get(health::health))
+        .route("/pages/home", get(pages::home))
+        .route("/pages/dashboard", get(dashboard::page))
+        .route("/pages/settings/appearance", get(pages::appearance))
+        .route("/pages/admin", get(admin::overview))
+        .route(
+            "/pages/admin/standing-requests",
+            get(admin::standing_requests),
+        )
+        .route("/pages/admin/pilots", get(admin::pilots))
+        .route("/pages/admin/settings", get(admin::settings))
+}
+
+/// `GET|PUT /storage/{path}`: 403, the answer to a bad signature.
+async fn storage() -> Response {
+    errors::http_error(StatusCode::FORBIDDEN, "")
+}
+
+/// A page path reached the api: SvelteKit serves it, the proxy never sends
+/// a GET here.
+async fn page_elsewhere(uri: axum::http::Uri) -> Response {
+    errors::not_found(uri).await
+}
+
+/// The same-origin check in place of a CSRF token: a mutation the browser
+/// marks as coming from another site, or whose `Origin` is not this host,
+/// is refused with a 419. Requests without either
+/// header (non-browser clients) cannot be forged by a third-party page and
+/// pass. The session cookie is `SameSite=Lax` on top.
+async fn reject_cross_site_mutations(request: Request, next: Next) -> Response {
+    let read_only = matches!(
+        *request.method(),
+        Method::GET | Method::HEAD | Method::OPTIONS
+    );
+    if read_only {
+        return next.run(request).await;
+    }
+    let headers = request.headers();
+    let fetch_site_foreign = headers
+        .get("sec-fetch-site")
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|site| site != "same-origin" && site != "none");
+    let origin_foreign = headers
+        .get(header::ORIGIN)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|origin| is_cross_site_url(origin, headers));
+    if fetch_site_foreign || origin_foreign {
+        return errors::http_error(
+            StatusCode::from_u16(419).expect("419 is a status"),
+            "CSRF token mismatch.",
+        );
+    }
+    next.run(request).await
+}
+
+/// Whether a URL (an `Origin` or `Referer`) names a host other than the
+/// one serving the request: neither its `Host` nor the host a proxy in
+/// front forwarded (a local proxy may rename the host and the origin to
+/// its upstream, Caddy and Traefik keep both). An opaque `null` origin
+/// counts as foreign.
+fn is_cross_site_url(url: &str, headers: &HeaderMap) -> bool {
+    let authority = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))
+        .and_then(|rest| rest.split('/').next())
+        .unwrap_or_default();
+    if authority.is_empty() {
+        return true;
+    }
+    ![header::HOST.as_str(), "x-forwarded-host"]
+        .into_iter()
+        .filter_map(|name| headers.get(name).and_then(|value| value.to_str().ok()))
+        .any(|host| authority.eq_ignore_ascii_case(host))
+}

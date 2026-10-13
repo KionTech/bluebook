@@ -64,8 +64,8 @@ async fn adds_new_source_contacts_to_a_syncing_character() {
     }));
     assert_json_eq(
         &serde_json::json!([
-            { "contact_id": 100, "standing": 5.0 },
-            { "contact_id": 200, "standing": -10.0 },
+            { "contact_id": 100, "standing": 5 },
+            { "contact_id": 200, "standing": -10 },
         ]),
         &serde_json::json!(
             app.rows(&format!(

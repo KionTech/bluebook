@@ -39,6 +39,40 @@ fn without_state(location: &str) -> String {
     before.to_owned()
 }
 
+/// The tickers Laravel lost on the admin settings page (FIXES.md, "The
+/// admin settings page lost the active character's tickers"): the
+/// dataset's.
+fn with_tickers(props: &mut Value) {
+    let dataset: Value = serde_json::from_str(
+        &std::fs::read_to_string(crate::common::repo_path("tests/fixtures/dataset.json"))
+            .expect("the dataset"),
+    )
+    .expect("dataset JSON");
+    let ticker = |table: &str, id: &Value| {
+        dataset[table]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| &row["id"] == id))
+            .map(|row| row["ticker"].clone())
+            .unwrap_or(Value::Null)
+    };
+    let fill = |character: &mut Value| {
+        for (key, table) in [("corporation", "corporations"), ("alliance", "alliances")] {
+            if character[key].is_object() && character[key]["ticker"].is_null() {
+                let id = character[key]["id"].clone();
+                character[key]["ticker"] = ticker(table, &id);
+            }
+        }
+    };
+    fill(&mut props["auth"]["active_character"]);
+    for character in props["auth"]["characters"]
+        .as_array_mut()
+        .into_iter()
+        .flatten()
+    {
+        fill(character);
+    }
+}
+
 async fn check(name: &str) {
     let golden = golden::load("pages", name);
     let app = golden::app(&golden["sql"]).await;
@@ -55,7 +89,13 @@ async fn check(name: &str) {
     match status {
         200 if golden.get("props").is_some() => {
             response.assert_status(200);
-            assert_json_eq(&page_props(&golden), &response.json());
+            let mut expected = page_props(&golden);
+            if name.starts_with("admin_settings") {
+                with_tickers(&mut expected);
+            }
+            let mut actual = response.json();
+            golden::unmock(&mut actual, &app);
+            assert_json_eq(&expected, &actual);
         }
         200 => {
             // Laravel's health page.
@@ -73,7 +113,11 @@ async fn check(name: &str) {
             response.assert_status(302);
             let expected = golden["location"].as_str().expect("a location");
             if expected.contains("&state=") {
-                assert_eq!(without_state(expected), without_state(response.location()));
+                // The SSO is the mock's (N5).
+                let actual = response
+                    .location()
+                    .replace(&app.sso.url(), "https://login.eveonline.com");
+                assert_eq!(without_state(expected), without_state(&actual));
             } else {
                 assert_eq!(response.location(), expected);
             }

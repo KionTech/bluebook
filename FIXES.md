@@ -75,6 +75,20 @@ name, the ticker and the member characters' names).
 
 Test: `admin_pilots::the_search_matches_percent_and_underscore_literally`.
 
+### The admin settings page lost the active character's tickers
+
+Laravel: the settings controller loaded the active character's
+corporation and alliance with only their id and name, before the shared
+props loaded them with their tickers, which then counted as loaded
+already. On `/admin/settings` the active character (in
+`auth.active_character` and in `auth.characters`) had `ticker: null`
+for its corporation and alliance.
+
+Now: the tickers are there on every page.
+
+Test: `golden_pages::admin_settings` (and `admin_settings_alt`,
+`admin_settings_no_source`), which expect the dataset's tickers.
+
 ### A failed token refresh still sent the request with the dead token
 
 Laravel: when the refresh of an expiring token failed (and the token row

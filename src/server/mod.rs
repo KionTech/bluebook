@@ -3,8 +3,16 @@
 //! (`/api/pages/*`), the EVE login, and every form the pages send, at the
 //! URL and method the site always used.
 
+pub mod account;
+pub mod admin;
+pub mod answer;
+pub mod characters;
+pub mod dashboard;
 pub mod errors;
 pub mod health;
+pub mod input;
+pub mod pages;
+pub mod paginate;
 pub mod viewer;
 
 use std::sync::Arc;
@@ -19,8 +27,10 @@ use sqlx::PgPool;
 use tokio::sync::Notify;
 use tower_http::normalize_path::NormalizePath;
 
+use crate::auth::sso::SsoClient;
 use crate::clock::Clock;
 use crate::config::Config;
+use crate::esi::EsiClient;
 
 /// The default bind address of the API server; the SvelteKit dev proxy and
 /// the reverse proxy point at it.
@@ -36,6 +46,8 @@ pub struct AppState {
     pub pool: PgPool,
     pub config: Arc<Config>,
     pub clock: Clock,
+    pub esi: EsiClient,
+    pub sso: SsoClient,
     /// Wakes the queue workers when a job is queued.
     pub jobs: Arc<Notify>,
 }
@@ -44,6 +56,8 @@ impl AppState {
     pub fn new(pool: PgPool, config: Config, clock: Clock) -> Self {
         Self {
             pool,
+            esi: EsiClient::new(&config.esi),
+            sso: SsoClient::new(config.eve.clone(), &config.esi.user_agent),
             config: Arc::new(config),
             clock,
             jobs: Arc::new(Notify::new()),
@@ -64,37 +78,42 @@ pub fn router(state: AppState) -> Router {
 }
 
 fn routes(state: AppState) -> Router {
-    use errors::not_implemented;
+    use crate::auth::login;
     Router::new()
         .route("/up", get(health::up))
-        // The EVE login.
-        .route("/eve", get(not_implemented))
-        .route("/eve/callback", get(not_implemented))
-        .route("/logout", post(not_implemented))
+        // The EVE login and the local demo login.
+        .route("/eve", get(login::redirect))
+        .route("/eve/callback", get(login::callback))
+        .route("/demo-login", get(login::demo))
+        .route("/logout", post(login::logout))
         // The pilot's forms.
-        .route("/standings/sync", post(not_implemented))
-        .route("/standings/{character}", put(not_implemented))
-        .route("/standings/{character}/request", post(not_implemented))
+        .route("/standings/sync", post(characters::sync_now))
+        .route("/standings/{character}", put(characters::update_sync))
+        .route(
+            "/standings/{character}/request",
+            post(characters::request_standing),
+        )
         .route(
             "/auth/character/{character}",
-            put(not_implemented).delete(not_implemented),
+            put(characters::switch).delete(characters::destroy),
         )
-        .route("/auth/character/{character}/main", put(not_implemented))
-        .route("/setup/complete", post(not_implemented))
-        .route("/settings", any(not_implemented))
+        .route(
+            "/auth/character/{character}/main",
+            put(characters::set_main),
+        )
+        .route("/setup/complete", post(characters::complete_setup))
+        .route("/settings", any(characters::settings_redirect))
         // The admin's forms.
-        .route("/admin/standings", put(not_implemented))
-        .route("/admin/standings/sync", post(not_implemented))
+        .route("/admin/standings", put(admin::update_source))
+        .route("/admin/standings/sync", post(admin::sync_source))
         .route(
             "/admin/standing-requests/{standing_request}",
-            put(not_implemented),
+            put(admin::resolve_request),
         )
-        .route("/admin/discord-settings", put(not_implemented))
-        // The local disk's routes; nothing is stored there.
-        .route(
-            "/storage/{*path}",
-            get(not_implemented).put(not_implemented),
-        )
+        .route("/admin/discord-settings", put(admin::update_discord))
+        // The local disk's routes; nothing is stored there, so every
+        // signature is invalid, as Laravel answered.
+        .route("/storage/{*path}", get(storage).put(storage))
         // The pages are SvelteKit's; any other method is not allowed.
         .route("/", get(page_elsewhere))
         .route("/dashboard", get(page_elsewhere))
@@ -121,16 +140,23 @@ fn routes(state: AppState) -> Router {
 /// `/api/pages` (the home page is `/api/pages/home`), and the health
 /// check.
 fn api_router() -> Router<AppState> {
-    use errors::not_implemented;
     Router::new()
         .route("/health", get(health::health))
-        .route("/pages/home", get(not_implemented))
-        .route("/pages/dashboard", get(not_implemented))
-        .route("/pages/settings/appearance", get(not_implemented))
-        .route("/pages/admin", get(not_implemented))
-        .route("/pages/admin/standing-requests", get(not_implemented))
-        .route("/pages/admin/pilots", get(not_implemented))
-        .route("/pages/admin/settings", get(not_implemented))
+        .route("/pages/home", get(pages::home))
+        .route("/pages/dashboard", get(dashboard::page))
+        .route("/pages/settings/appearance", get(pages::appearance))
+        .route("/pages/admin", get(admin::overview))
+        .route(
+            "/pages/admin/standing-requests",
+            get(admin::standing_requests),
+        )
+        .route("/pages/admin/pilots", get(admin::pilots))
+        .route("/pages/admin/settings", get(admin::settings))
+}
+
+/// `GET|PUT /storage/{path}`: 403, the answer to a bad signature.
+async fn storage() -> Response {
+    errors::http_error(StatusCode::FORBIDDEN, "")
 }
 
 /// A page path reached the api: SvelteKit serves it, the proxy never sends

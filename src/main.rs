@@ -18,8 +18,16 @@ async fn main() {
     bluebook::db::migrate(&pool)
         .await
         .expect("database migrations");
+    match bluebook::jobs::release_reserved(&pool).await {
+        Ok(0) => {}
+        Ok(count) => tracing::info!(count, "jobs of the last run released"),
+        Err(error) => tracing::error!(%error, "jobs of the last run not released"),
+    }
 
     let state = bluebook::server::AppState::new(pool, config, bluebook::clock::Clock::system());
+    bluebook::jobs::spawn_workers(&state);
+    bluebook::scheduler::spawn(&state);
+    bluebook::scheduler::spawn_housekeeping(&state);
     let app = bluebook::server::router(state);
 
     tracing::info!("listening on http://{addr}");

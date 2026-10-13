@@ -4,5 +4,5 @@
   "path": "/eve",
   "sql": [],
   "status": 302,
-  "location": "https://login.eveonline.com/v2/oauth/authorize/?client_id=reference-client-id&redirect_uri=https%3A%2F%2Fbluebook.nicolaskion.dev%2Feve%2Fcallback&scope=&response_type=code&state=2DZKNwGhgWK8B3xGtOsEhntqCHvBlFCPVyNrBL89"
+  "location": "https://login.eveonline.com/v2/oauth/authorize/?client_id=reference-client-id&redirect_uri=https%3A%2F%2Fbluebook.nicolaskion.dev%2Feve%2Fcallback&scope=&response_type=code&state=Si1NlnhKF2eD9ccvICrkwej9fMvoy1WScJXWgDBX"
 }

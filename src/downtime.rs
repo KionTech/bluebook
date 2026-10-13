@@ -1,7 +1,12 @@
-//! EVE's daily downtime. Not ported yet.
+//! EVE's daily downtime, 11:00 to 11:15 UTC (start included, end not):
+//! ESI is down or unstable then, so the scheduled syncs skip their run.
 
-use time::OffsetDateTime;
+use time::{OffsetDateTime, Time};
 
-pub fn is_active(_at: OffsetDateTime) -> bool {
-    todo!("the downtime window")
+const START: Time = time::macros::time!(11:00);
+const END: Time = time::macros::time!(11:15);
+
+pub fn is_active(at: OffsetDateTime) -> bool {
+    let time = at.to_offset(time::UtcOffset::UTC).time();
+    time >= START && time < END
 }

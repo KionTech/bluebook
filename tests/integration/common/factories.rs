@@ -325,7 +325,7 @@ impl TestApp {
 
     pub async fn scalar(&self, sql: &str) -> Value {
         let value: Option<sqlx::types::Json<Value>> = sqlx::query_scalar(sqlx::AssertSqlSafe(
-            format!("select to_jsonb(x.v) from ({sql}) x(v)"),
+            format!("select to_json(x.v) from ({sql}) x(v)"),
         ))
         .fetch_optional(&self.pool)
         .await
@@ -336,7 +336,7 @@ impl TestApp {
     /// The rows of a query as JSON objects.
     pub async fn rows(&self, sql: &str) -> Vec<Value> {
         let rows: Vec<sqlx::types::Json<Value>> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-            "select to_jsonb(x) from ({sql}) x"
+            "select to_json(x) from ({sql}) x"
         )))
         .fetch_all(&self.pool)
         .await

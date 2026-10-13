@@ -471,8 +471,8 @@ PAGES = [
     ("admin_requests_rejected", 1, ADMIN, "/admin/standing-requests?status=rejected", []),
     ("admin_requests_unknown_status", 1, ADMIN, "/admin/standing-requests?status=maybe", []),
     ("admin_requests_page_2", 1, ADMIN, "/admin/standing-requests?page=2", [
-        "insert into standing_requests (subject_type, subject_id, requested_by_character_id, status, created_at, updated_at) "
-        "select 'character', 96000000 + n, 95000010, 'pending', {minutes:-500}, {minutes:-500} from ("
+        "insert into standing_requests (id, subject_type, subject_id, requested_by_character_id, status, created_at, updated_at) "
+        "select 1000 + n, 'character', 96000000 + n, 95000010, 'pending', {minutes:-500}, {minutes:-500} from ("
         "select a.n + b.n * 10 as n from (select 0 n union select 1 union select 2 union select 3 union select 4 "
         "union select 5 union select 6 union select 7 union select 8 union select 9) a, (select 0 n union select 1 "
         "union select 2) b) numbers where n < 28",

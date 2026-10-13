@@ -66,7 +66,7 @@ async fn fetches_and_stores_corporation_source_contacts() {
     assert_eq!(
         app.scalar("select standing::float8 from source_contacts where contact_id = 100")
             .await,
-        json!(5.0)
+        json!(5)
     );
     assert_eq!(contact_name(&app, 100).await, json!("Alpha Alliance"));
     assert_eq!(contact_name(&app, 200).await, json!("Bravo Pilot"));

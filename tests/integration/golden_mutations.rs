@@ -98,6 +98,22 @@ async fn check(name: &str) {
         }
     }
 
+    let mut rows = golden["rows"].clone();
+    if golden["method"] == "DELETE" && path.starts_with("/auth/character/") && status == 302 {
+        // A removed character stops syncing (FIXES.md, "Removed
+        // characters were mailed about lapsed tokens forever").
+        let removed: i64 = path
+            .rsplit('/')
+            .next()
+            .and_then(|id| id.parse().ok())
+            .expect("a character id");
+        for character in rows["characters"].as_array_mut().expect("characters") {
+            if character["id"] == removed {
+                character["should_sync"] = Value::Bool(false);
+            }
+        }
+    }
+
     assert_json_eq(&golden["jobs"], &golden::jobs(&app).await);
     if golden["fakes"]
         .as_object()
@@ -106,7 +122,7 @@ async fn check(name: &str) {
         let expected = golden::expected_calls(&golden, &app.config.esi.user_agent);
         assert_json_eq(&expected, &golden::comparable_calls(&app));
     }
-    assert_rows_eq(&golden["rows"], &golden::rows(&app).await, &app);
+    assert_rows_eq(&rows, &golden::rows(&app).await, &app);
 }
 
 macro_rules! golden_mutations {

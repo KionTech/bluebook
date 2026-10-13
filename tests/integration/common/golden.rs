@@ -343,20 +343,23 @@ pub fn translate_sql(statement: &str, app: &TestApp) -> Vec<String> {
         )
     };
     if statement.starts_with("insert into standing_requests") && statement.contains("96000000") {
-        // 28 more pending requests, older than the dataset's, a second
-        // apart.
+        // 28 more pending requests, older than the dataset's.
         return vec![format!(
-            "insert into standing_requests (subject_type, subject_id, requested_by_character_id,
+            "insert into standing_requests (id, subject_type, subject_id, requested_by_character_id,
                 status, created_at, updated_at)
-             select 'character', 96000000 + n, 95000010, 'pending',
-                {} - make_interval(secs => n), {}
+             select 1000 + n, 'character', 96000000 + n, 95000010, 'pending', {0}, {0}
              from generate_series(0, 27) n",
-            at(-500),
             at(-500)
         )];
     }
     if statement.starts_with("update standing_requests set created_at = date_sub") {
-        return Vec::new();
+        // A second apart, by subject id (which moves two of the dataset's
+        // requests too, as it did in MySQL).
+        return vec![
+            "update standing_requests set created_at = created_at - make_interval(secs => subject_id - 96000000)
+             where subject_id >= 96000000"
+                .to_owned(),
+        ];
     }
     if statement.starts_with("insert into corporations") && statement.contains("Filler Corp") {
         return vec![format!(
@@ -460,6 +463,15 @@ pub async fn rows(app: &TestApp) -> Value {
         "https://discord.test/webhook",
     );
     value
+}
+
+/// N7 backwards on an answer: the mock's webhook is the dataset's.
+pub fn unmock(value: &mut Value, app: &TestApp) {
+    replace_string(
+        value,
+        &app.discord.webhook(),
+        "https://discord.test/webhook",
+    );
 }
 
 fn replace_string(value: &mut Value, from: &str, to: &str) {

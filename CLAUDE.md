@@ -27,12 +27,21 @@ in doubt about structure or tooling, do what they do.
   is `last_synced_at` plus 5 minutes.
 - ESI calls carry `X-Compatibility-Date: 2026-07-17`. Reads, affiliations
   and names are tried 5 times, 5 seconds apart, on a 5xx; contact writes
-  and mail never. A token expiring within 5 minutes is refreshed first;
-  any failed refresh deletes it, and so does any ESI 401 or 403 with it.
-- Character syncs write the source's standings and then set the ledger
-  (`character_synced_contacts`) to exactly the source's list, even when
-  writes failed. Only ledger contacts the source dropped are deleted in
-  game; personal contacts are never touched.
+  and mail never. A token expiring within 5 minutes is refreshed first.
+  A token is deleted only when the refresh answers `invalid_grant` (or
+  `invalid_token`), or ESI answers 401 right after a fresh refresh; a
+  first 401 refreshes and retries once. Every other failure (network,
+  timeouts, 5xx, 420/429, other refresh errors) keeps the token and marks
+  it failing (`failing_since`, `last_failure`), and the next success
+  clears the mark. After 3 days of failing the character counts as
+  lapsed for the warnings and the token mail. A 403 never touches the
+  token; on the source read it sets `unreadable_since`.
+- A failed read of a character's contacts skips its sync for that run.
+  The ledger (`character_synced_contacts`) records contacts that already
+  match plus writes ESI accepted; a refused add or edit keeps its old
+  row, and a failed delete keeps its row for a later run. Only ledger
+  contacts the source dropped are deleted in game; personal contacts are
+  never touched.
 
 ## Testing rules
 

@@ -52,9 +52,10 @@ services:
       BIND_ADDR: 0.0.0.0:3000
       APP_URL: ${APP_URL:-http://localhost:5315}
       RUST_LOG: ${RUST_LOG:-info}
-      # The demo pilots' characters are admins here, so the admin pages
-      # can be previewed.
-      EVE_ADMIN_CHARACTER_ID: ${EVE_ADMIN_CHARACTER_ID:-2100000001}
+      # The demo pilot is an admin here, so the admin pages can be
+      # previewed; 2112000001 is the admin of tests/fixtures/dataset.json,
+      # which the visual comparison loads.
+      EVE_ADMIN_CHARACTER_ID: ${EVE_ADMIN_CHARACTER_ID:-2100000001,2112000001}
       # The demo login is a dev convenience (and the e2e suite uses it).
       DEMO_ENABLED: ${DEMO_ENABLED:-true}
       # The schedule calls ESI; off unless asked for.

@@ -201,4 +201,6 @@ Areas the PHP suite never covered:
 - `demo`: the demo login and seed.
 - `frontend/e2e/routes.spec.ts`, `seo.spec.ts`, `demo.spec.ts`: the route
   contract, heads and the demo in a browser.
+- `frontend/e2e/visual.spec.ts`: every page at desktop and phone width
+  against the Laravel page's screenshot (skipped in CI).
 - vitest suites next to the frontend code.

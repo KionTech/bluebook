@@ -1,0 +1,287 @@
+{
+  "user": 1,
+  "character": 2112000001,
+  "path": "/admin/pilots?view=corporations&search=Corp&page=2",
+  "sql": [
+    "insert into corporations (id, name, ticker, created_at, updated_at) select 97000000 + n, concat('Filler Corp ', lpad(n, 2, '0')), 'FILL', {minutes:0}, {minutes:0} from (select a.n + b.n * 10 as n from (select 0 n union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) a, (select 0 n union select 1 union select 2) b) numbers where n < 22",
+    "insert into characters (id, name, corporation_id, user_id, should_sync, created_at, updated_at) select 96500000 + n, concat('Filler Pilot ', lpad(n, 2, '0')), 97000000 + n, 4, 0, {minutes:0}, {minutes:0} from (select id - 97000000 as n from corporations where id between 97000000 and 97000099) numbers"
+  ],
+  "status": 200,
+  "component": "admin/Pilots",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 1,
+        "name": "Admin Pilot"
+      },
+      "is_admin": true,
+      "source_unreadable": false,
+      "reauth_characters": [],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=publicData%2Cesi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1%2Cesi-corporations.read_contacts.v1%2Cesi-alliances.read_contacts.v1%2Cesi-mail.send_mail.v1",
+      "active_character": {
+        "id": 2112000001,
+        "name": "Admin Pilot",
+        "corporation_id": 98000001,
+        "alliance_id": 99000002,
+        "corporation": {
+          "id": 98000001,
+          "name": "Home Corp",
+          "ticker": "HOMC"
+        },
+        "alliance": {
+          "id": 99000002,
+          "name": "Home Alliance",
+          "ticker": "HOME"
+        }
+      },
+      "characters": [
+        {
+          "id": 2112000001,
+          "name": "Admin Pilot",
+          "corporation_id": 98000001,
+          "alliance_id": 99000002,
+          "corporation": {
+            "id": 98000001,
+            "name": "Home Corp",
+            "ticker": "HOMC"
+          },
+          "alliance": {
+            "id": 99000002,
+            "name": "Home Alliance",
+            "ticker": "HOME"
+          }
+        },
+        {
+          "id": 2112000002,
+          "name": "admin alt",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    },
+    "characters": null,
+    "groups": {
+      "current_page": 2,
+      "data": [
+        {
+          "id": 97000019,
+          "name": "Filler Corp 19",
+          "ticker": "FILL",
+          "standing": null,
+          "characters": [
+            {
+              "id": 96500019,
+              "name": "Filler Pilot 19",
+              "is_main": false,
+              "account": {
+                "id": 4,
+                "name": "Red Pilot"
+              },
+              "standing": null,
+              "corporation": {
+                "id": 97000019,
+                "name": "Filler Corp 19",
+                "ticker": "FILL"
+              },
+              "alliance": null
+            }
+          ]
+        },
+        {
+          "id": 97000020,
+          "name": "Filler Corp 20",
+          "ticker": "FILL",
+          "standing": null,
+          "characters": [
+            {
+              "id": 96500020,
+              "name": "Filler Pilot 20",
+              "is_main": false,
+              "account": {
+                "id": 4,
+                "name": "Red Pilot"
+              },
+              "standing": null,
+              "corporation": {
+                "id": 97000020,
+                "name": "Filler Corp 20",
+                "ticker": "FILL"
+              },
+              "alliance": null
+            }
+          ]
+        },
+        {
+          "id": 97000021,
+          "name": "Filler Corp 21",
+          "ticker": "FILL",
+          "standing": null,
+          "characters": [
+            {
+              "id": 96500021,
+              "name": "Filler Pilot 21",
+              "is_main": false,
+              "account": {
+                "id": 4,
+                "name": "Red Pilot"
+              },
+              "standing": null,
+              "corporation": {
+                "id": 97000021,
+                "name": "Filler Corp 21",
+                "ticker": "FILL"
+              },
+              "alliance": null
+            }
+          ]
+        },
+        {
+          "id": 98000001,
+          "name": "Home Corp",
+          "ticker": "HOMC",
+          "standing": {
+            "value": 10,
+            "source": "source"
+          },
+          "characters": [
+            {
+              "id": 2112000001,
+              "name": "Admin Pilot",
+              "is_main": true,
+              "account": {
+                "id": 1,
+                "name": "Admin Pilot"
+              },
+              "standing": {
+                "value": 10,
+                "source": "source"
+              },
+              "corporation": {
+                "id": 98000001,
+                "name": "Home Corp",
+                "ticker": "HOMC"
+              },
+              "alliance": {
+                "id": 99000002,
+                "name": "Home Alliance",
+                "ticker": "HOME"
+              }
+            },
+            {
+              "id": 95000030,
+              "name": "Member Pilot",
+              "is_main": true,
+              "account": {
+                "id": 5,
+                "name": "Member Pilot"
+              },
+              "standing": {
+                "value": 10,
+                "source": "source"
+              },
+              "corporation": {
+                "id": 98000001,
+                "name": "Home Corp",
+                "ticker": "HOMC"
+              },
+              "alliance": {
+                "id": 99000002,
+                "name": "Home Alliance",
+                "ticker": "HOME"
+              }
+            }
+          ]
+        },
+        {
+          "id": 98000004,
+          "name": "Red Corp",
+          "ticker": "REDC",
+          "standing": {
+            "value": -10,
+            "source": "corporation"
+          },
+          "characters": [
+            {
+              "id": 95000020,
+              "name": "Red Pilot",
+              "is_main": false,
+              "account": {
+                "id": 4,
+                "name": "Red Pilot"
+              },
+              "standing": {
+                "value": -10,
+                "source": "corporation"
+              },
+              "corporation": {
+                "id": 98000004,
+                "name": "Red Corp",
+                "ticker": "REDC"
+              },
+              "alliance": {
+                "id": 99000003,
+                "name": "Red Alliance",
+                "ticker": "RED"
+              }
+            }
+          ]
+        }
+      ],
+      "first_page_url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=1",
+      "from": 21,
+      "last_page": 2,
+      "last_page_url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=2",
+      "links": [
+        {
+          "url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=1",
+          "label": "&laquo; Previous",
+          "page": 1,
+          "active": false
+        },
+        {
+          "url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=1",
+          "label": "1",
+          "page": 1,
+          "active": false
+        },
+        {
+          "url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=2",
+          "label": "2",
+          "page": 2,
+          "active": true
+        },
+        {
+          "url": null,
+          "label": "Next &raquo;",
+          "page": null,
+          "active": false
+        }
+      ],
+      "next_page_url": null,
+      "path": "http://127.0.0.1:8315/admin/pilots",
+      "per_page": 20,
+      "prev_page_url": "http://127.0.0.1:8315/admin/pilots?view=corporations&search=Corp&page=1",
+      "to": 25,
+      "total": 25
+    },
+    "filters": {
+      "search": "Corp",
+      "view": "corporations"
+    }
+  }
+}

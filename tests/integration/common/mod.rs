@@ -193,6 +193,31 @@ impl TestApp {
         }
     }
 
+    /// The EVE login as a browser goes through it: `/eve` (with its
+    /// query), EVE's page (the mock SSO signs its character in) and the
+    /// callback. Returns the browser afterwards and the callback's answer.
+    pub async fn eve_login(&self, browser: &Browser, query: &str) -> (Browser, TestResponse) {
+        let start = self.get(browser, &format!("/eve{query}")).await;
+        start.assert_status(302);
+        let location = start.location().to_owned();
+        let state = location
+            .split("state=")
+            .nth(1)
+            .expect("a state")
+            .split('&')
+            .next()
+            .expect("a state")
+            .to_owned();
+        let browser = start.browser(browser);
+        let callback = self
+            .get(
+                &browser,
+                &format!("/eve/callback?code={}&state={state}", self.sso.code()),
+            )
+            .await;
+        (callback.browser(&browser), callback)
+    }
+
     /// The session row of a browser.
     pub async fn session_data(&self, browser: &Browser) -> Option<Map<String, Value>> {
         let token = browser.cookie.as_ref()?.split_once('=')?.1.to_owned();

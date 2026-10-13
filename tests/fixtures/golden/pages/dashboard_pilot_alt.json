@@ -1,0 +1,286 @@
+{
+  "user": 2,
+  "character": 95000002,
+  "path": "/dashboard",
+  "sql": [],
+  "status": 200,
+  "component": "Dashboard",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 2,
+        "name": "Nicolas Pilot"
+      },
+      "is_admin": false,
+      "source_unreadable": false,
+      "reauth_characters": [
+        {
+          "id": 95000002,
+          "name": "Tina Pilot"
+        }
+      ],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": null,
+      "active_character": {
+        "id": 95000002,
+        "name": "Tina Pilot",
+        "corporation_id": 98000003,
+        "alliance_id": null,
+        "corporation": {
+          "id": 98000003,
+          "name": "Kion Trading Inc.",
+          "ticker": "KION"
+        },
+        "alliance": null
+      },
+      "characters": [
+        {
+          "id": 95000001,
+          "name": "Nicolas Pilot",
+          "corporation_id": 98000002,
+          "alliance_id": 99000001,
+          "corporation": {
+            "id": 98000002,
+            "name": "Blue Corp",
+            "ticker": "BLUC"
+          },
+          "alliance": {
+            "id": 99000001,
+            "name": "Blue Alliance",
+            "ticker": "BLUA"
+          }
+        },
+        {
+          "id": 95000002,
+          "name": "Tina Pilot",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        },
+        {
+          "id": 95000003,
+          "name": "Émile Pilot",
+          "corporation_id": 98000005,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000005,
+            "name": "Écho Industries",
+            "ticker": "ECHO"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    },
+    "showSetupWizard": false,
+    "source": {
+      "type": "alliance",
+      "entity_id": 99000002,
+      "entity_name": "Home Alliance",
+      "last_synced_at": "2026-10-13T15:41:54+00:00"
+    },
+    "canViewStandings": true,
+    "standings": [
+      {
+        "contact_id": 99000001,
+        "contact_type": "alliance",
+        "name": "Blue Alliance",
+        "standing": 10,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 98000002,
+        "contact_type": "corporation",
+        "name": "Blue Corp",
+        "standing": 10,
+        "redundant_via": {
+          "contact_type": "alliance",
+          "contact_id": 99000001,
+          "name": "Blue Alliance"
+        }
+      },
+      {
+        "contact_id": 95000100,
+        "contact_type": "character",
+        "name": "Contact One",
+        "standing": 5,
+        "redundant_via": {
+          "contact_type": "corporation",
+          "contact_id": 98000002,
+          "name": "Blue Corp"
+        }
+      },
+      {
+        "contact_id": 98000099,
+        "contact_type": "corporation",
+        "name": null,
+        "standing": 5,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 95000002,
+        "contact_type": "character",
+        "name": "Tina Pilot",
+        "standing": 0,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 98000003,
+        "contact_type": "corporation",
+        "name": "Kion Trading Inc.",
+        "standing": -5,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 500001,
+        "contact_type": "faction",
+        "name": "Caldari State",
+        "standing": -5,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 99000003,
+        "contact_type": "alliance",
+        "name": "Red Alliance",
+        "standing": -10,
+        "redundant_via": null
+      },
+      {
+        "contact_id": 95000101,
+        "contact_type": "character",
+        "name": "Spy Pilot",
+        "standing": -10,
+        "redundant_via": {
+          "contact_type": "corporation",
+          "contact_id": 98000004,
+          "name": "Red Corp"
+        }
+      },
+      {
+        "contact_id": 98000004,
+        "contact_type": "corporation",
+        "name": "Red Corp",
+        "standing": -10,
+        "redundant_via": {
+          "contact_type": "alliance",
+          "contact_id": 99000003,
+          "name": "Red Alliance"
+        }
+      }
+    ],
+    "characters": [
+      {
+        "id": 95000001,
+        "name": "Nicolas Pilot",
+        "is_main": true,
+        "should_sync": true,
+        "has_write_scope": true,
+        "inherits_source": false,
+        "synced_contacts_count": 3,
+        "corporation": {
+          "id": 98000002,
+          "name": "Blue Corp",
+          "ticker": "BLUC"
+        },
+        "alliance": {
+          "id": 99000001,
+          "name": "Blue Alliance",
+          "ticker": "BLUA"
+        }
+      },
+      {
+        "id": 95000002,
+        "name": "Tina Pilot",
+        "is_main": false,
+        "should_sync": true,
+        "has_write_scope": false,
+        "inherits_source": false,
+        "synced_contacts_count": 0,
+        "corporation": {
+          "id": 98000003,
+          "name": "Kion Trading Inc.",
+          "ticker": "KION"
+        },
+        "alliance": null
+      },
+      {
+        "id": 95000003,
+        "name": "Émile Pilot",
+        "is_main": false,
+        "should_sync": false,
+        "has_write_scope": false,
+        "inherits_source": false,
+        "synced_contacts_count": 0,
+        "corporation": {
+          "id": 98000005,
+          "name": "Écho Industries",
+          "ticker": "ECHO"
+        },
+        "alliance": null
+      }
+    ],
+    "requestableOptions": [
+      {
+        "type": "character",
+        "id": 95000001,
+        "name": "Nicolas Pilot",
+        "via_character_id": 95000001,
+        "status": "done"
+      },
+      {
+        "type": "corporation",
+        "id": 98000002,
+        "name": "Blue Corp",
+        "via_character_id": 95000001,
+        "status": null
+      },
+      {
+        "type": "alliance",
+        "id": 99000001,
+        "name": "Blue Alliance",
+        "via_character_id": 95000001,
+        "status": null
+      },
+      {
+        "type": "character",
+        "id": 95000002,
+        "name": "Tina Pilot",
+        "via_character_id": 95000002,
+        "status": null
+      },
+      {
+        "type": "corporation",
+        "id": 98000003,
+        "name": "Kion Trading Inc.",
+        "via_character_id": 95000002,
+        "status": "pending"
+      },
+      {
+        "type": "character",
+        "id": 95000003,
+        "name": "Émile Pilot",
+        "via_character_id": 95000003,
+        "status": null
+      },
+      {
+        "type": "corporation",
+        "id": 98000005,
+        "name": "Écho Industries",
+        "via_character_id": 95000003,
+        "status": "pending"
+      }
+    ]
+  }
+}

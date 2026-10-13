@@ -149,6 +149,15 @@ behind the live site's back.
 
 Test: `scheduler::the_schedule_is_off_unless_enabled`.
 
+### A trailing slash redirects
+
+Laravel served `/dashboard/` like `/dashboard`. The pages answer a 308
+to the address without the slash now (SvelteKit's default, as on the
+other rewritten sites); the forms still take both.
+
+Tests: `frontend/e2e/routes.spec.ts` "a trailing slash redirects to the
+page without it", `pages::a_trailing_slash_reaches_the_same_form`.
+
 ### The demo login
 
 `/demo-login` signs in as a demo pilot without EVE SSO when
@@ -180,3 +189,6 @@ Kept as Laravel has it, listed for the owner:
   once and never refreshed.
 - Asking again for a rejected standing reopens the old request, which keeps
   its original date, so it sorts among the old requests.
+- The tab titles end in the app name, `APP_NAME` ("Bluebook"), as the
+  production build's `VITE_APP_NAME="${APP_NAME}"` gave them; a build
+  without it said "Standings". Confirm the production value.

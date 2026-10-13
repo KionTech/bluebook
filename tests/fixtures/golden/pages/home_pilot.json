@@ -1,0 +1,92 @@
+{
+  "user": 2,
+  "character": 95000001,
+  "path": "/",
+  "sql": [],
+  "status": 200,
+  "component": "Welcome",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 2,
+        "name": "Nicolas Pilot"
+      },
+      "is_admin": false,
+      "source_unreadable": false,
+      "reauth_characters": [
+        {
+          "id": 95000002,
+          "name": "Tina Pilot"
+        }
+      ],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": null,
+      "active_character": {
+        "id": 95000001,
+        "name": "Nicolas Pilot",
+        "corporation_id": 98000002,
+        "alliance_id": 99000001,
+        "corporation": {
+          "id": 98000002,
+          "name": "Blue Corp",
+          "ticker": "BLUC"
+        },
+        "alliance": {
+          "id": 99000001,
+          "name": "Blue Alliance",
+          "ticker": "BLUA"
+        }
+      },
+      "characters": [
+        {
+          "id": 95000001,
+          "name": "Nicolas Pilot",
+          "corporation_id": 98000002,
+          "alliance_id": 99000001,
+          "corporation": {
+            "id": 98000002,
+            "name": "Blue Corp",
+            "ticker": "BLUC"
+          },
+          "alliance": {
+            "id": 99000001,
+            "name": "Blue Alliance",
+            "ticker": "BLUA"
+          }
+        },
+        {
+          "id": 95000002,
+          "name": "Tina Pilot",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        },
+        {
+          "id": 95000003,
+          "name": "Émile Pilot",
+          "corporation_id": 98000005,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000005,
+            "name": "Écho Industries",
+            "ticker": "ECHO"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    }
+  }
+}

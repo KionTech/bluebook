@@ -90,6 +90,9 @@ pub struct Canned {
     pub body: Value,
 }
 
+/// A fixed answer: status, body and headers.
+type ExactAnswer = (u16, Value, Vec<(String, String)>);
+
 #[derive(Default)]
 struct EsiData {
     /// character id to (corporation id, alliance id).
@@ -111,6 +114,11 @@ struct EsiData {
     failures: HashMap<String, u16>,
     /// Every request answers this status.
     fail_all: Option<u16>,
+    /// `METHOD /path` to a fixed answer (the golden scenarios' fakes).
+    exact: HashMap<String, ExactAnswer>,
+    /// Only the exact answers; anything else is a 404, as the Laravel
+    /// reference's fakes answered.
+    strict: bool,
     next_mail_id: i64,
     requests: Vec<Recorded>,
 }
@@ -210,6 +218,16 @@ impl MockEsi {
         });
     }
 
+    /// `METHOD /path` always answers this (the recorded fakes).
+    pub fn exact(&self, line: &str, code: u16, body: Value, headers: Vec<(String, String)>) {
+        self.with(|data| data.exact.insert(line.to_owned(), (code, body, headers)));
+    }
+
+    /// Answers only what `exact` set, 404 for anything else.
+    pub fn strict(&self) {
+        self.with(|data| data.strict = true);
+    }
+
     /// `METHOD /path` (or `/path` for any method) answers a status.
     pub fn fail_path(&self, path: &str, code: u16) {
         self.with(|data| data.failures.insert(path.to_owned(), code));
@@ -294,6 +312,23 @@ async fn esi_any(
         .or_else(|| data.failures.get(&path))
     {
         return esi_json(*code, json!({ "error": "mock failure" }));
+    }
+    if let Some((code, body, headers)) = data.exact.get(&line).cloned() {
+        let mut response = if body.is_null() {
+            status(code).into_response()
+        } else {
+            esi_json(code, body)
+        };
+        for (name, value) in headers {
+            response.headers_mut().insert(
+                axum::http::HeaderName::from_bytes(name.as_bytes()).expect("a header name"),
+                HeaderValue::from_str(&value).expect("a header"),
+            );
+        }
+        return response;
+    }
+    if data.strict {
+        return status(404).into_response();
     }
 
     let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
@@ -401,6 +436,8 @@ struct SsoData {
     /// one.
     refresh_answers: VecDeque<u16>,
     token_status: Option<u16>,
+    /// The answer of every refresh grant, instead of a numbered one.
+    refresh_answer: Option<Value>,
     refreshes: i64,
     requests: Vec<Recorded>,
 }
@@ -427,6 +464,7 @@ impl MockSso {
             code: "valid-code".to_owned(),
             refresh_answers: VecDeque::new(),
             token_status: None,
+            refresh_answer: None,
             refreshes: 0,
             requests: Vec::new(),
         }));
@@ -472,6 +510,11 @@ impl MockSso {
             .expect("SSO lock")
             .refresh_answers
             .extend(statuses);
+    }
+
+    /// Every refresh grant answers this.
+    pub fn refresh_answer(&self, answer: Value) {
+        self.data.lock().expect("SSO lock").refresh_answer = Some(answer);
     }
 
     pub fn requests(&self) -> Vec<Recorded> {
@@ -539,6 +582,9 @@ async fn sso_token(
                     .into_response();
             }
             data.refreshes += 1;
+            if let Some(answer) = &data.refresh_answer {
+                return axum::Json(answer.clone()).into_response();
+            }
             axum::Json(json!({
                 "access_token": format!("refreshed-access-{}", data.refreshes),
                 "expires_in": 1199,

@@ -1,0 +1,149 @@
+{
+  "user": 1,
+  "character": 2112000001,
+  "path": "/admin/pilots?view=alliances&search=blua",
+  "sql": [],
+  "status": 200,
+  "component": "admin/Pilots",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 1,
+        "name": "Admin Pilot"
+      },
+      "is_admin": true,
+      "source_unreadable": false,
+      "reauth_characters": [],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=publicData%2Cesi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1%2Cesi-corporations.read_contacts.v1%2Cesi-alliances.read_contacts.v1%2Cesi-mail.send_mail.v1",
+      "active_character": {
+        "id": 2112000001,
+        "name": "Admin Pilot",
+        "corporation_id": 98000001,
+        "alliance_id": 99000002,
+        "corporation": {
+          "id": 98000001,
+          "name": "Home Corp",
+          "ticker": "HOMC"
+        },
+        "alliance": {
+          "id": 99000002,
+          "name": "Home Alliance",
+          "ticker": "HOME"
+        }
+      },
+      "characters": [
+        {
+          "id": 2112000001,
+          "name": "Admin Pilot",
+          "corporation_id": 98000001,
+          "alliance_id": 99000002,
+          "corporation": {
+            "id": 98000001,
+            "name": "Home Corp",
+            "ticker": "HOMC"
+          },
+          "alliance": {
+            "id": 99000002,
+            "name": "Home Alliance",
+            "ticker": "HOME"
+          }
+        },
+        {
+          "id": 2112000002,
+          "name": "admin alt",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    },
+    "characters": null,
+    "groups": {
+      "current_page": 1,
+      "data": [
+        {
+          "id": 99000001,
+          "name": "Blue Alliance",
+          "ticker": "BLUA",
+          "standing": {
+            "value": 10,
+            "source": "alliance"
+          },
+          "characters": [
+            {
+              "id": 95000001,
+              "name": "Nicolas Pilot",
+              "is_main": true,
+              "account": {
+                "id": 2,
+                "name": "Nicolas Pilot"
+              },
+              "standing": {
+                "value": 10,
+                "source": "corporation"
+              },
+              "corporation": {
+                "id": 98000002,
+                "name": "Blue Corp",
+                "ticker": "BLUC"
+              },
+              "alliance": {
+                "id": 99000001,
+                "name": "Blue Alliance",
+                "ticker": "BLUA"
+              }
+            }
+          ]
+        }
+      ],
+      "first_page_url": "http://127.0.0.1:8315/admin/pilots?view=alliances&search=blua&page=1",
+      "from": 1,
+      "last_page": 1,
+      "last_page_url": "http://127.0.0.1:8315/admin/pilots?view=alliances&search=blua&page=1",
+      "links": [
+        {
+          "url": null,
+          "label": "&laquo; Previous",
+          "page": null,
+          "active": false
+        },
+        {
+          "url": "http://127.0.0.1:8315/admin/pilots?view=alliances&search=blua&page=1",
+          "label": "1",
+          "page": 1,
+          "active": true
+        },
+        {
+          "url": null,
+          "label": "Next &raquo;",
+          "page": null,
+          "active": false
+        }
+      ],
+      "next_page_url": null,
+      "path": "http://127.0.0.1:8315/admin/pilots",
+      "per_page": 20,
+      "prev_page_url": null,
+      "to": 1,
+      "total": 1
+    },
+    "filters": {
+      "search": "blua",
+      "view": "alliances"
+    }
+  }
+}

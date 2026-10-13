@@ -1,0 +1,8 @@
+{
+  "user": null,
+  "character": null,
+  "path": "/dashboard",
+  "sql": [],
+  "status": 302,
+  "location": "http://127.0.0.1:8315/eve"
+}

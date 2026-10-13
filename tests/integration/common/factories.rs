@@ -325,7 +325,7 @@ impl TestApp {
 
     pub async fn scalar(&self, sql: &str) -> Value {
         let value: Option<sqlx::types::Json<Value>> = sqlx::query_scalar(sqlx::AssertSqlSafe(
-            format!("select to_jsonb(x) from ({sql}) x(v)"),
+            format!("select to_jsonb(x.v) from ({sql}) x(v)"),
         ))
         .fetch_optional(&self.pool)
         .await

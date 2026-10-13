@@ -45,7 +45,7 @@ case "${1:-}" in
     git -C "$repo" archive main | tar -x -C "$dir/app"
     cp "$repo/scripts/laravel-reference/env" "$dir/app/.env"
     cp "$repo/scripts/laravel-reference/ReferenceServiceProvider.php" "$dir/app/app/Providers/"
-    sed -i 's/App\\Providers\\AppServiceProvider::class,/&\n    App\\Providers\\ReferenceServiceProvider::class,/' "$dir/app/bootstrap/providers.php"
+    sed -i 's/^    AppServiceProvider::class,/&\n    App\\Providers\\ReferenceServiceProvider::class,/' "$dir/app/bootstrap/providers.php"
     mysql_up
     run --name bluebook-laravel-setup "$image" sh -c '
       composer install --no-interaction --no-progress

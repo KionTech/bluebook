@@ -6,9 +6,9 @@
 //   app only has EVE SSO), with the active character in the session when
 //   given, and answers 204. record.py keeps the session cookie.
 // - Every outgoing HTTP request is answered from
-//   storage/app/http-fakes.json (`METHOD url` or `url` keys, record.py
-//   writes them per scenario) and logged to storage/logs/http.jsonl.
-//   Unknown URLs answer 404.
+//   storage/app/http-fakes.json (`METHOD url` keys, the URL with its query
+//   or without, record.py writes them per scenario) and logged to
+//   storage/logs/http.jsonl. Unknown URLs answer 404.
 
 declare(strict_types=1);
 
@@ -46,7 +46,9 @@ final class ReferenceServiceProvider extends ServiceProvider
                 'body' => $request->body(),
             ])."\n", FILE_APPEND);
 
-            $fake = $fakes[$request->method().' '.$request->url()] ?? $fakes[$request->url()] ?? null;
+            $url = $request->url();
+            $bare = explode('?', $url, 2)[0];
+            $fake = $fakes[$request->method().' '.$url] ?? $fakes[$request->method().' '.$bare] ?? null;
 
             if ($fake === null) {
                 return Http::response(null, 404);

@@ -1,0 +1,229 @@
+{
+  "user": 1,
+  "character": 2112000001,
+  "path": "/admin/standing-requests?page=2",
+  "sql": [
+    "insert into standing_requests (subject_type, subject_id, requested_by_character_id, status, created_at, updated_at) select 'character', 96000000 + n, 95000010, 'pending', {minutes:-500}, {minutes:-500} from (select a.n + b.n * 10 as n from (select 0 n union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) a, (select 0 n union select 1 union select 2) b) numbers where n < 28",
+    "update standing_requests set created_at = date_sub(created_at, interval subject_id - 96000000 second) where subject_id >= 96000000"
+  ],
+  "status": 200,
+  "component": "admin/StandingRequests",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 1,
+        "name": "Admin Pilot"
+      },
+      "is_admin": true,
+      "source_unreadable": false,
+      "reauth_characters": [],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=publicData%2Cesi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1%2Cesi-corporations.read_contacts.v1%2Cesi-alliances.read_contacts.v1%2Cesi-mail.send_mail.v1",
+      "active_character": {
+        "id": 2112000001,
+        "name": "Admin Pilot",
+        "corporation_id": 98000001,
+        "alliance_id": 99000002,
+        "corporation": {
+          "id": 98000001,
+          "name": "Home Corp",
+          "ticker": "HOMC"
+        },
+        "alliance": {
+          "id": 99000002,
+          "name": "Home Alliance",
+          "ticker": "HOME"
+        }
+      },
+      "characters": [
+        {
+          "id": 2112000001,
+          "name": "Admin Pilot",
+          "corporation_id": 98000001,
+          "alliance_id": 99000002,
+          "corporation": {
+            "id": 98000001,
+            "name": "Home Corp",
+            "ticker": "HOMC"
+          },
+          "alliance": {
+            "id": 99000002,
+            "name": "Home Alliance",
+            "ticker": "HOME"
+          }
+        },
+        {
+          "id": 2112000002,
+          "name": "admin alt",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    },
+    "standingRequests": {
+      "current_page": 2,
+      "data": [
+        {
+          "id": 18,
+          "status": "pending",
+          "created_at": "2026-10-13T07:23:30+00:00",
+          "subject": {
+            "type": "character",
+            "id": 96000024,
+            "name": "Fresh Pilot"
+          },
+          "requested_by": "Fresh Pilot",
+          "effective_standing": {
+            "standing": -5,
+            "source": "corporation",
+            "via_type": "corporation",
+            "via_id": 98000003,
+            "via_name": "Kion Trading Inc."
+          }
+        },
+        {
+          "id": 21,
+          "status": "pending",
+          "created_at": "2026-10-13T07:23:29+00:00",
+          "subject": {
+            "type": "character",
+            "id": 96000025,
+            "name": "Fresh Pilot"
+          },
+          "requested_by": "Fresh Pilot",
+          "effective_standing": {
+            "standing": -5,
+            "source": "corporation",
+            "via_type": "corporation",
+            "via_id": 98000003,
+            "via_name": "Kion Trading Inc."
+          }
+        },
+        {
+          "id": 24,
+          "status": "pending",
+          "created_at": "2026-10-13T07:23:28+00:00",
+          "subject": {
+            "type": "character",
+            "id": 96000026,
+            "name": "Fresh Pilot"
+          },
+          "requested_by": "Fresh Pilot",
+          "effective_standing": {
+            "standing": -5,
+            "source": "corporation",
+            "via_type": "corporation",
+            "via_id": 98000003,
+            "via_name": "Kion Trading Inc."
+          }
+        },
+        {
+          "id": 27,
+          "status": "pending",
+          "created_at": "2026-10-13T07:23:27+00:00",
+          "subject": {
+            "type": "character",
+            "id": 96000027,
+            "name": "Fresh Pilot"
+          },
+          "requested_by": "Fresh Pilot",
+          "effective_standing": {
+            "standing": -5,
+            "source": "corporation",
+            "via_type": "corporation",
+            "via_id": 98000003,
+            "via_name": "Kion Trading Inc."
+          }
+        },
+        {
+          "id": 2,
+          "status": "pending",
+          "created_at": "2026-09-20T11:40:31+00:00",
+          "subject": {
+            "type": "corporation",
+            "id": 98000003,
+            "name": "Kion Trading Inc."
+          },
+          "requested_by": "Tina Pilot",
+          "effective_standing": {
+            "standing": -5,
+            "source": "direct",
+            "via_type": "corporation",
+            "via_id": 98000003,
+            "via_name": "Kion Trading Inc."
+          }
+        },
+        {
+          "id": 5,
+          "status": "pending",
+          "created_at": "2026-09-20T11:25:29+00:00",
+          "subject": {
+            "type": "corporation",
+            "id": 98000005,
+            "name": "Écho Industries"
+          },
+          "requested_by": "Émile Pilot",
+          "effective_standing": null
+        }
+      ],
+      "first_page_url": "http://127.0.0.1:8315/admin/standing-requests?page=1",
+      "from": 26,
+      "last_page": 2,
+      "last_page_url": "http://127.0.0.1:8315/admin/standing-requests?page=2",
+      "links": [
+        {
+          "url": "http://127.0.0.1:8315/admin/standing-requests?page=1",
+          "label": "&laquo; Previous",
+          "page": 1,
+          "active": false
+        },
+        {
+          "url": "http://127.0.0.1:8315/admin/standing-requests?page=1",
+          "label": "1",
+          "page": 1,
+          "active": false
+        },
+        {
+          "url": "http://127.0.0.1:8315/admin/standing-requests?page=2",
+          "label": "2",
+          "page": 2,
+          "active": true
+        },
+        {
+          "url": null,
+          "label": "Next &raquo;",
+          "page": null,
+          "active": false
+        }
+      ],
+      "next_page_url": null,
+      "path": "http://127.0.0.1:8315/admin/standing-requests",
+      "per_page": 25,
+      "prev_page_url": "http://127.0.0.1:8315/admin/standing-requests?page=1",
+      "to": 31,
+      "total": 31
+    },
+    "counts": {
+      "pending": 31,
+      "done": 1,
+      "rejected": 1
+    },
+    "filters": {
+      "status": "pending"
+    }
+  }
+}

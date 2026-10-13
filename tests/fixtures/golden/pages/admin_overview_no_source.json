@@ -1,0 +1,134 @@
+{
+  "user": 1,
+  "character": 2112000001,
+  "path": "/admin",
+  "sql": [
+    "delete from standings_sources"
+  ],
+  "status": 200,
+  "component": "admin/Overview",
+  "props": {
+    "errors": {},
+    "name": "Bluebook",
+    "auth": {
+      "user": {
+        "id": 1,
+        "name": "Admin Pilot"
+      },
+      "is_admin": true,
+      "source_unreadable": false,
+      "reauth_characters": [],
+      "sync_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=esi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1",
+      "admin_scopes_url": "http://127.0.0.1:8315/eve?add_to_account=1&scopes=publicData%2Cesi-characters.read_contacts.v1%2Cesi-characters.write_contacts.v1%2Cesi-corporations.read_contacts.v1%2Cesi-alliances.read_contacts.v1%2Cesi-mail.send_mail.v1",
+      "active_character": {
+        "id": 2112000001,
+        "name": "Admin Pilot",
+        "corporation_id": 98000001,
+        "alliance_id": 99000002,
+        "corporation": {
+          "id": 98000001,
+          "name": "Home Corp",
+          "ticker": "HOMC"
+        },
+        "alliance": {
+          "id": 99000002,
+          "name": "Home Alliance",
+          "ticker": "HOME"
+        }
+      },
+      "characters": [
+        {
+          "id": 2112000001,
+          "name": "Admin Pilot",
+          "corporation_id": 98000001,
+          "alliance_id": 99000002,
+          "corporation": {
+            "id": 98000001,
+            "name": "Home Corp",
+            "ticker": "HOMC"
+          },
+          "alliance": {
+            "id": 99000002,
+            "name": "Home Alliance",
+            "ticker": "HOME"
+          }
+        },
+        {
+          "id": 2112000002,
+          "name": "admin alt",
+          "corporation_id": 98000003,
+          "alliance_id": null,
+          "corporation": {
+            "id": 98000003,
+            "name": "Kion Trading Inc.",
+            "ticker": "KION"
+          },
+          "alliance": null
+        }
+      ]
+    },
+    "sidebarOpen": true,
+    "flash": {
+      "success": null,
+      "error": null,
+      "info": null
+    },
+    "source": null,
+    "stats": {
+      "pending_requests": 3,
+      "pilots": 5,
+      "syncing_characters": 5,
+      "source_contacts": 10
+    },
+    "recentRequests": [
+      {
+        "id": 2,
+        "status": "pending",
+        "created_at": "2026-10-13T15:13:54+00:00",
+        "subject": {
+          "type": "corporation",
+          "id": 98000003,
+          "name": "Kion Trading Inc."
+        },
+        "requested_by": "Tina Pilot",
+        "effective_standing": {
+          "standing": -5,
+          "source": "direct",
+          "via_type": "corporation",
+          "via_id": 98000003,
+          "via_name": "Kion Trading Inc."
+        }
+      },
+      {
+        "id": 5,
+        "status": "pending",
+        "created_at": "2026-10-13T14:58:54+00:00",
+        "subject": {
+          "type": "corporation",
+          "id": 98000005,
+          "name": "Écho Industries"
+        },
+        "requested_by": "Émile Pilot",
+        "effective_standing": null
+      },
+      {
+        "id": 1,
+        "status": "pending",
+        "created_at": "2026-10-13T14:43:54+00:00",
+        "subject": {
+          "type": "character",
+          "id": 95000010,
+          "name": "Fresh Pilot"
+        },
+        "requested_by": "Fresh Pilot",
+        "effective_standing": {
+          "standing": -5,
+          "source": "corporation",
+          "via_type": "corporation",
+          "via_id": 98000003,
+          "via_name": "Kion Trading Inc."
+        }
+      }
+    ]
+  }
+}

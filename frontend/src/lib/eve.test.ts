@@ -33,24 +33,22 @@ describe('standings', () => {
   });
 
   it('colours a standing from blue to red', () => {
-    expect(standingTextClass(10)).toBe('text-blue-600 dark:text-blue-400');
-    expect(standingTextClass(1)).toBe('text-sky-600 dark:text-sky-400');
-    expect(standingTextClass(0)).toBe('text-muted-foreground');
-    expect(standingTextClass(-1)).toBe('text-orange-600 dark:text-orange-400');
-    expect(standingTextClass(-5)).toBe('text-red-600 dark:text-red-400');
-    expect(standingChipClass(5)).toBe('bg-blue-500/10 text-blue-600 dark:text-blue-400');
-    expect(standingChipClass(-10)).toBe('bg-red-500/10 text-red-600 dark:text-red-400');
+    expect(standingTextClass(10)).toBe('text-standing-excellent');
+    expect(standingTextClass(1)).toBe('text-standing-good');
+    expect(standingTextClass(0)).toBe('text-standing-neutral');
+    expect(standingTextClass(-1)).toBe('text-standing-bad');
+    expect(standingTextClass(-5)).toBe('text-standing-terrible');
+    expect(standingChipClass(5)).toBe('bg-standing-excellent/12 text-standing-excellent');
+    expect(standingChipClass(-10)).toBe('bg-standing-terrible/12 text-standing-terrible');
   });
 
   it('shows a source covered entity green', () => {
-    expect(effectiveStandingTextClass({ value: 10, source: 'source' })).toBe(
-      'text-green-600 dark:text-green-400',
-    );
+    expect(effectiveStandingTextClass({ value: 10, source: 'source' })).toBe('text-standing-own');
     expect(effectiveStandingTextClass({ value: -5, source: 'corporation' })).toBe(
-      'text-red-600 dark:text-red-400',
+      'text-standing-terrible',
     );
     expect(effectiveStandingChipClass({ value: 10, source: 'source' })).toBe(
-      'bg-green-500/10 text-green-600 dark:text-green-400',
+      'bg-standing-own/12 text-standing-own',
     );
   });
 });

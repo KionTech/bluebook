@@ -99,8 +99,8 @@ test('lists pilots with their main character and alts', async ({ page, context, 
 
   await page.goto('/admin/pilots');
 
-  await expect(page.getByText('Main Pilot').first()).toBeVisible();
-  await expect(page.getByText('Alt Pilot').first()).toBeVisible();
+  await expect(page.getByText('Main Pilot').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText('Alt Pilot').filter({ visible: true }).first()).toBeVisible();
   noErrors();
 });
 

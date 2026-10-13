@@ -31,23 +31,23 @@ export function standingLabel(standing: number): string {
 }
 
 /**
- * The Tailwind text-colour class for a standing, from blue (positive) through
- * muted (neutral) to red (negative).
+ * The text-colour class for a standing, in EVE's colours: excellent (dark
+ * blue), good (light blue), neutral (grey), bad (orange), terrible (red).
  */
 export function standingTextClass(standing: number): string {
   if (standing >= 5) {
-    return 'text-blue-600 dark:text-blue-400';
+    return 'text-standing-excellent';
   }
   if (standing > 0) {
-    return 'text-sky-600 dark:text-sky-400';
+    return 'text-standing-good';
   }
   if (standing === 0) {
-    return 'text-muted-foreground';
+    return 'text-standing-neutral';
   }
   if (standing > -5) {
-    return 'text-orange-600 dark:text-orange-400';
+    return 'text-standing-bad';
   }
-  return 'text-red-600 dark:text-red-400';
+  return 'text-standing-terrible';
 }
 
 type EffectiveStanding = { value: number; source: string };
@@ -57,9 +57,7 @@ type EffectiveStanding = { value: number; source: string };
  * source itself render green, like own corp/alliance in game.
  */
 export function effectiveStandingTextClass(standing: EffectiveStanding): string {
-  return standing.source === 'source'
-    ? 'text-green-600 dark:text-green-400'
-    : standingTextClass(standing.value);
+  return standing.source === 'source' ? 'text-standing-own' : standingTextClass(standing.value);
 }
 
 /**
@@ -68,7 +66,7 @@ export function effectiveStandingTextClass(standing: EffectiveStanding): string 
  */
 export function effectiveStandingChipClass(standing: EffectiveStanding): string {
   return standing.source === 'source'
-    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+    ? 'bg-standing-own/12 text-standing-own'
     : standingChipClass(standing.value);
 }
 
@@ -78,16 +76,16 @@ export function effectiveStandingChipClass(standing: EffectiveStanding): string 
  */
 export function standingChipClass(standing: number): string {
   if (standing >= 5) {
-    return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
+    return 'bg-standing-excellent/12 text-standing-excellent';
   }
   if (standing > 0) {
-    return 'bg-sky-500/10 text-sky-600 dark:text-sky-400';
+    return 'bg-standing-good/12 text-standing-good';
   }
   if (standing === 0) {
-    return 'bg-muted text-muted-foreground';
+    return 'bg-standing-neutral/12 text-standing-neutral';
   }
   if (standing > -5) {
-    return 'bg-orange-500/10 text-orange-600 dark:text-orange-400';
+    return 'bg-standing-bad/12 text-standing-bad';
   }
-  return 'bg-red-500/10 text-red-600 dark:text-red-400';
+  return 'bg-standing-terrible/12 text-standing-terrible';
 }

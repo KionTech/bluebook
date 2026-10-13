@@ -8,14 +8,20 @@
   <title>{errorTitle(page.status)}</title>
 </svelte:head>
 
-<div
-  class="relative flex min-h-screen items-top justify-center bg-white text-black sm:items-center sm:pt-0"
-  role="main"
->
-  <div class="mx-auto max-w-xl sm:px-6 lg:px-8">
-    <div class="flex items-center pt-8 sm:justify-start sm:pt-0">
-      <h1 class="border-r border-gray-400 px-4 text-lg text-black">{page.status}</h1>
-      <div class="ml-4 text-lg text-black">{page.error?.message ?? errorTitle(page.status)}</div>
-    </div>
+<main class="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+  <div class="max-w-md text-center">
+    <p class="font-mono text-sm text-primary">ERR {page.status}</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-[0.08em] uppercase">
+      {page.error?.message ?? errorTitle(page.status)}
+    </h1>
+    <p class="mt-6">
+      <a
+        href="/"
+        data-sveltekit-reload
+        class="text-sm font-medium text-primary underline-offset-4 hover:underline"
+      >
+        Back to Bluebook
+      </a>
+    </p>
   </div>
-</div>
+</main>

@@ -62,3 +62,12 @@ export function optionStatusLabel(
   }
   return null;
 }
+
+/** The options the account already asked about, newest decision state
+ * first: pending, then approved, then rejected. */
+export function requestedOptions(options: RequestOption[]): RequestOption[] {
+  const order = ['pending', 'done', 'rejected'];
+  return options
+    .filter((option) => option.status !== null && order.includes(option.status))
+    .toSorted((a, b) => order.indexOf(a.status!) - order.indexOf(b.status!));
+}

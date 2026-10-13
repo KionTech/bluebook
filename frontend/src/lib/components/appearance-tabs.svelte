@@ -1,4 +1,6 @@
 <script lang="ts">
+  // The light, dark or system choice, kept in localStorage and the
+  // appearance cookie.
   import { onMount } from 'svelte';
   import Monitor from '@lucide/svelte/icons/monitor';
   import Moon from '@lucide/svelte/icons/moon';
@@ -6,13 +8,13 @@
 
   import { type Appearance, storedAppearance, updateAppearance } from '#lib/appearance.ts';
 
-  let appearance: Appearance = $state('system');
+  let appearance: Appearance = $state('dark');
 
   onMount(() => {
     appearance = storedAppearance(localStorage);
   });
 
-  const tabs = [
+  const options = [
     { value: 'light', Icon: Sun, label: 'Light' },
     { value: 'dark', Icon: Moon, label: 'Dark' },
     { value: 'system', Icon: Monitor, label: 'System' },
@@ -24,20 +26,21 @@
   }
 </script>
 
-<div class="inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
-  {#each tabs as { value, Icon, label } (value)}
+<div class="grid max-w-md grid-cols-3 gap-2" role="group" aria-label="Theme">
+  {#each options as { value, Icon, label } (value)}
     <button
       type="button"
+      aria-pressed={appearance === value}
       onclick={() => choose(value)}
       class={[
-        'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
+        'label-caps flex flex-col items-center gap-2 border px-3 py-4 text-xs transition-[background-color,border-color,box-shadow]',
         appearance === value
-          ? 'bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100'
-          : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
+          ? 'border-primary bg-primary/10 text-primary shadow-[0_0_14px_var(--glow)]'
+          : 'bg-card/60 text-muted-foreground hover:border-border-strong hover:text-foreground',
       ]}
     >
-      <Icon class="-ml-1 h-4 w-4" />
-      <span class="ml-1.5 text-sm">{label}</span>
+      <Icon class="size-5" />
+      {label}
     </button>
   {/each}
 </div>

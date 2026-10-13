@@ -1,11 +1,12 @@
 // The `appearance` cookie (light, dark or system), set in the browser by
 // the appearance settings and read here so the first paint already has
-// the right theme, as Laravel's HandleAppearance middleware did.
+// the right theme, as Laravel's HandleAppearance middleware did. Without
+// a choice the theme is dark.
 
 export type Appearance = 'light' | 'dark' | 'system';
 
 export function appearanceOf(cookie: string | undefined): Appearance {
-  return cookie === 'light' || cookie === 'dark' ? cookie : 'system';
+  return cookie === 'light' || cookie === 'system' ? cookie : 'dark';
 }
 
 /** Fills the `%appearance.*%` placeholders of app.html. */

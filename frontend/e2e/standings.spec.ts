@@ -36,8 +36,9 @@ test('shows a grant-access banner for synced characters missing scopes', async (
 
   await page.goto('/dashboard');
 
-  await expect(page.getByText('need re-authentication')).toBeVisible();
-  await expect(page.getByText('Grant access')).toBeVisible();
+  const prompt = page.getByRole('alert').filter({ hasText: 'Tokenless needs to log in again.' });
+  await expect(prompt).toBeVisible();
+  await expect(prompt.getByRole('link', { name: 'Log in again' })).toBeVisible();
   noErrors();
 });
 
@@ -98,7 +99,7 @@ test('lists standings alphabetically within the same standing and type', async (
   await expect(page.getByText('Alpha Corp')).toBeVisible();
 
   const names = await page
-    .locator('p.truncate.text-sm.font-medium')
+    .locator('[data-test="standing-name"]')
     .evaluateAll((elements) => elements.map((element) => element.textContent?.trim()));
   expect(names).toEqual(['Alpha Corp', 'Mid Corp', 'Zebra Corp']);
   noErrors();

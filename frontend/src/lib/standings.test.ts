@@ -7,6 +7,7 @@ import {
   filterStandings,
   hasStanding,
   optionStatusLabel,
+  requestedOptions,
   sortStandings,
   typeRank,
 } from './standings.ts';
@@ -67,5 +68,17 @@ describe('request options', () => {
     expect(canRequest(option('character', 1, 'done'), null)).toBe(false);
     expect(canRequest(option('character', 1, 'rejected'), null)).toBe(true);
     expect(canRequest(option('character', 1), null)).toBe(true);
+  });
+});
+
+describe('requestedOptions', () => {
+  it('keeps the requested options, pending first', () => {
+    const options = [
+      option('character', 1),
+      option('corporation', 2, 'rejected'),
+      option('alliance', 3, 'pending'),
+      option('character', 4, 'done'),
+    ];
+    expect(requestedOptions(options).map((item) => item.id)).toEqual([3, 4, 2]);
   });
 });

@@ -62,8 +62,6 @@ export type Paginated<T> = {
   total: number;
 };
 
-export type BreadcrumbItem = { title: string; href: string };
-
 /** A standings source as the pages show it. */
 export type SourceSummary = {
   type: string;

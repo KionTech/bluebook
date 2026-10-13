@@ -1,19 +1,40 @@
-/* The shadcn theme of the Laravel starter kit, as the Laravel app had it
-   (resources/css/app.css). */
+/*
+  The Photon look: hard edges (no radius anywhere), hairline borders,
+  chamfered panels and primary buttons, one cyan accent, EVE's standing
+  colours and amber warnings. Dark first; the light theme speaks the same
+  language. Fonts are self-hosted (fontsource), no external requests.
+*/
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --font-sans:
-    Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
+/* Radius 0 everywhere: every rounded-* utility resolves to a hard edge. */
+@theme {
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+@theme inline {
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,130 +61,272 @@
   --color-destructive-foreground: var(--destructive-foreground);
 
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
 
-  --color-sidebar: var(--sidebar-background);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+
+  /* EVE's standing colours. */
+  --color-standing-excellent: var(--standing-excellent);
+  --color-standing-good: var(--standing-good);
+  --color-standing-neutral: var(--standing-neutral);
+  --color-standing-bad: var(--standing-bad);
+  --color-standing-terrible: var(--standing-terrible);
+  --color-standing-own: var(--standing-own);
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-}
-
-@layer utilities {
-  body,
-  html {
-    --font-sans:
-      'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-      'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  }
-}
-
+/* Light: the same language on a pale slate. */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 3.9%);
+  --background: hsl(206 24% 95%);
+  --foreground: hsl(212 45% 10%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 3.9%);
+  --card-foreground: hsl(212 45% 10%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(0 0% 92.1%);
-  --secondary-foreground: hsl(0 0% 9%);
-  --muted: hsl(0 0% 96.1%);
-  --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96.1%);
-  --accent-foreground: hsl(0 0% 9%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 92.8%);
-  --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
-  --chart-1: hsl(12 76% 61%);
-  --chart-2: hsl(173 58% 39%);
-  --chart-3: hsl(197 37% 24%);
-  --chart-4: hsl(43 74% 66%);
-  --chart-5: hsl(27 87% 67%);
-  --radius: 0.5rem;
-  --sidebar-background: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(0 0% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 94%);
-  --sidebar-accent-foreground: hsl(0 0% 30%);
-  --sidebar-border: hsl(0 0% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-  --sidebar: hsl(0 0% 98%);
+  --popover-foreground: hsl(212 45% 10%);
+  --primary: hsl(189 100% 25%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(200 25% 90%);
+  --secondary-foreground: hsl(212 45% 12%);
+  --muted: hsl(205 22% 91%);
+  --muted-foreground: hsl(210 16% 34%);
+  --accent: hsl(190 45% 90%);
+  --accent-foreground: hsl(212 45% 10%);
+  --destructive: hsl(0 76% 40%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --warning: hsl(32 100% 28%);
+  --warning-soft: hsl(42 90% 92%);
+  --warning-border: hsl(38 80% 55%);
+  --success: hsl(150 70% 26%);
+  --border: hsl(206 20% 82%);
+  --border-strong: hsl(200 22% 62%);
+  --input: hsl(206 20% 70%);
+  --ring: hsl(189 100% 30%);
+  --grid-line: hsl(200 40% 40% / 0.06);
+  --glow: hsl(189 100% 30% / 0.18);
+
+  --standing-excellent: hsl(222 85% 40%);
+  --standing-good: hsl(206 90% 32%);
+  --standing-neutral: hsl(210 10% 36%);
+  --standing-bad: hsl(24 100% 32%);
+  --standing-terrible: hsl(0 78% 40%);
+  --standing-own: hsl(140 70% 26%);
+
+  color-scheme: light;
 }
 
+/* Dark: near-black deep blue with layered graphite panels. */
 .dark {
-  --background: hsl(0 0% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(0 0% 3.9%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(0 0% 3.9%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(0 0% 9%);
-  --secondary: hsl(0 0% 14.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(0 0% 16.08%);
-  --muted-foreground: hsl(0 0% 63.9%);
-  --accent: hsl(0 0% 14.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 14.9%);
-  --input: hsl(0 0% 14.9%);
-  --ring: hsl(0 0% 83.1%);
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
-  --sidebar-background: hsl(0 0% 7%);
-  --sidebar-foreground: hsl(0 0% 95.9%);
-  --sidebar-primary: hsl(360, 100%, 100%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(0 0% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-  --sidebar: hsl(240 5.9% 10%);
+  --background: hsl(214 45% 4%);
+  --foreground: hsl(196 30% 90%);
+  --card: hsl(212 36% 7%);
+  --card-foreground: hsl(196 30% 90%);
+  --popover: hsl(212 38% 8%);
+  --popover-foreground: hsl(196 30% 90%);
+  --primary: hsl(186 100% 46%);
+  --primary-foreground: hsl(214 60% 5%);
+  --secondary: hsl(208 30% 14%);
+  --secondary-foreground: hsl(196 30% 90%);
+  --muted: hsl(210 32% 10%);
+  --muted-foreground: hsl(203 16% 66%);
+  --accent: hsl(193 55% 12%);
+  --accent-foreground: hsl(190 60% 92%);
+  --destructive: hsl(2 90% 64%);
+  --destructive-foreground: hsl(214 60% 5%);
+  --warning: hsl(40 100% 58%);
+  --warning-soft: hsl(38 70% 9%);
+  --warning-border: hsl(38 80% 34%);
+  --success: hsl(150 70% 52%);
+  --border: hsl(205 34% 17%);
+  --border-strong: hsl(195 40% 30%);
+  --input: hsl(203 30% 26%);
+  --ring: hsl(186 100% 50%);
+  --grid-line: hsl(190 80% 60% / 0.035);
+  --glow: hsl(186 100% 50% / 0.22);
+
+  --standing-excellent: hsl(220 100% 70%);
+  --standing-good: hsl(202 100% 70%);
+  --standing-neutral: hsl(210 10% 66%);
+  --standing-bad: hsl(28 100% 60%);
+  --standing-terrible: hsl(2 95% 66%);
+  --standing-own: hsl(140 65% 55%);
+
+  color-scheme: dark;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+
+  html {
+    font-variant-numeric: tabular-nums;
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* A faint grid, and a cold glow from the top. */
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, var(--glow), transparent 70%),
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      40px 40px,
+      40px 40px;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  th {
+    font-family: var(--font-display);
+  }
+
+  /* Focus is an accent outline on a hard edge. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+}
+
+@layer components {
+  /* A panel with two chamfered corners (top right, bottom left); the
+     diagonals are drawn so the hairline frame stays closed. */
+  .frame {
+    --cut: 12px;
+    position: relative;
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--cut)) 0,
+      100% var(--cut),
+      100% 100%,
+      var(--cut) 100%,
+      0 calc(100% - var(--cut))
+    );
+  }
+
+  .frame::before,
+  .frame::after {
+    content: '';
+    position: absolute;
+    width: var(--cut);
+    height: var(--cut);
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom left,
+      transparent calc(50% - 0.75px),
+      var(--border-strong) calc(50% - 0.75px),
+      var(--border-strong) calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    );
+  }
+
+  .frame::before {
+    top: -1px;
+    right: -1px;
+  }
+
+  .frame::after {
+    bottom: -1px;
+    left: -1px;
+    transform: rotate(180deg);
+  }
+
+  /* Primary buttons: cut top left and bottom right. The outline would be
+     clipped, so focus sits inside the edge. */
+  .chamfer {
+    --cut: 8px;
+    clip-path: polygon(
+      var(--cut) 0,
+      100% 0,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0 100%,
+      0 var(--cut)
+    );
+  }
+
+  .chamfer:focus-visible {
+    outline: 2px solid var(--primary-foreground);
+    outline-offset: -4px;
+  }
+
+  /* Uppercase, letter-spaced labels. */
+  .label-caps {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* A portrait in a square frame with corner brackets. */
+  .bracketed {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .bracketed::after {
+    --b: var(--border-strong);
+    --l: 5px;
+    content: '';
+    position: absolute;
+    inset: -3px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--b), var(--b)) top left / var(--l) 1px no-repeat,
+      linear-gradient(var(--b), var(--b)) top left / 1px var(--l) no-repeat,
+      linear-gradient(var(--b), var(--b)) top right / var(--l) 1px no-repeat,
+      linear-gradient(var(--b), var(--b)) top right / 1px var(--l) no-repeat,
+      linear-gradient(var(--b), var(--b)) bottom left / var(--l) 1px no-repeat,
+      linear-gradient(var(--b), var(--b)) bottom left / 1px var(--l) no-repeat,
+      linear-gradient(var(--b), var(--b)) bottom right / var(--l) 1px no-repeat,
+      linear-gradient(var(--b), var(--b)) bottom right / 1px var(--l) no-repeat;
+  }
+
+  /* A small square status pip. */
+  .pip {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    background: currentColor;
+  }
+
+  /* Rows of a table or list: hairlines between, a glow on hover. */
+  .rows > *,
+  .rows > tr {
+    transition:
+      background-color 150ms,
+      box-shadow 150ms;
+  }
+
+  .rows > :hover {
+    background-color: color-mix(in oklab, var(--primary) 6%, transparent);
+    box-shadow: inset 2px 0 0 var(--primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

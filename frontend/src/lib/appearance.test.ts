@@ -14,11 +14,12 @@ describe('appearance', () => {
     expect(isDark('system', false)).toBe(false);
   });
 
-  it('reads the stored setting, system by default', () => {
+  it('reads the stored setting, dark by default', () => {
     const storage = (value: string | null) => ({ getItem: () => value });
     expect(storedAppearance(storage('light'))).toBe('light');
     expect(storedAppearance(storage('dark'))).toBe('dark');
-    expect(storedAppearance(storage(null))).toBe('system');
-    expect(storedAppearance(storage('nonsense'))).toBe('system');
+    expect(storedAppearance(storage(null))).toBe('dark');
+    expect(storedAppearance(storage('system'))).toBe('system');
+    expect(storedAppearance(storage('nonsense'))).toBe('dark');
   });
 });

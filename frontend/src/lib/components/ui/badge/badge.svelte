@@ -2,15 +2,16 @@
   import { type VariantProps, tv } from 'tailwind-variants';
 
   export const badgeVariants = tv({
-    base: 'inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
+    base: 'inline-flex items-center justify-center gap-1.5 border px-1.5 py-0.5 font-display text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.12em] w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 [&>svg]:pointer-events-none aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
+        default: 'border-primary bg-primary/15 text-primary [a&]:hover:bg-primary/25',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
+          'border-border-strong bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/70',
         destructive:
-          'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20',
-        outline: 'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+          'border-destructive/60 bg-destructive/10 text-destructive [a&]:hover:bg-destructive/20',
+        outline:
+          'border-border-strong text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
       },
     },
     defaultVariants: {

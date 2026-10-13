@@ -1,6 +1,7 @@
 // The appearance setting (light, dark or system), as useAppearance.ts kept
 // it: in localStorage for the browser and in a cookie for the server's
-// first paint, applied as the `dark` class on the root element.
+// first paint, applied as the `dark` class on the root element. Dark until
+// the user picks something else.
 export type Appearance = 'light' | 'dark' | 'system';
 
 export const COOKIE_DAYS = 365;
@@ -16,7 +17,7 @@ export function isDark(value: Appearance, systemIsDark: boolean): boolean {
 
 export function storedAppearance(storage: Pick<Storage, 'getItem'>): Appearance {
   const value = storage.getItem('appearance');
-  return value === 'light' || value === 'dark' ? value : 'system';
+  return value === 'light' || value === 'system' ? value : 'dark';
 }
 
 function prefersDark(): boolean {

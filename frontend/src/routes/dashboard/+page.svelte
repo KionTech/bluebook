@@ -8,29 +8,34 @@
   import Search from '@lucide/svelte/icons/search';
   import Star from '@lucide/svelte/icons/star';
 
-  import AppLayout from '#lib/components/layouts/app-layout.svelte';
+  import AppShell from '#lib/components/app-shell.svelte';
+  import EmptyState from '#lib/components/empty-state.svelte';
+  import EntityAvatar from '#lib/components/entity-avatar.svelte';
   import PageTitle from '#lib/components/page-title.svelte';
+  import SectionHeading from '#lib/components/section-heading.svelte';
   import SetupWizard from '#lib/components/setup-wizard.svelte';
-  import * as Avatar from '#lib/components/ui/avatar/index.ts';
   import { Badge } from '#lib/components/ui/badge/index.ts';
   import { Button } from '#lib/components/ui/button/index.ts';
-  import * as Card from '#lib/components/ui/card/index.ts';
   import * as Dialog from '#lib/components/ui/dialog/index.ts';
   import { Input } from '#lib/components/ui/input/index.ts';
   import { Switch } from '#lib/components/ui/switch/index.ts';
+  import { syncState, syncSummary } from '#lib/characters.ts';
   import { dateWithAgo } from '#lib/date.ts';
-  import { eveImage, standingLabel, standingTextClass } from '#lib/eve.ts';
+  import { standingLabel, standingTextClass } from '#lib/eve.ts';
   import { send } from '#lib/form.svelte.ts';
-  import { getInitials } from '#lib/initials.ts';
   import { Now } from '#lib/now.svelte.ts';
   import { POLL_INTERVAL_MS, startPolling } from '#lib/poll.ts';
   import { nextRefresh } from '#lib/refresh.ts';
-  import { canRequest, filterStandings, optionStatusLabel, sortStandings } from '#lib/standings.ts';
+  import {
+    canRequest,
+    filterStandings,
+    optionStatusLabel,
+    requestedOptions,
+    sortStandings,
+  } from '#lib/standings.ts';
   import type { RequestOption, SyncCharacter } from '#lib/types.ts';
 
   let { data } = $props();
-
-  const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
 
   // Reload the props every 30 s so standings and characters stay live.
   onMount(() => startPolling(refreshAll, POLL_INTERVAL_MS));
@@ -42,6 +47,38 @@
   let standingsSearch = $state('');
   const sortedStandings = $derived(sortStandings(data.standings ?? []));
   const filteredStandings = $derived(filterStandings(sortedStandings, standingsSearch));
+
+  const reauthIds = $derived(
+    new Set((data.auth.reauth_characters ?? []).map((character) => character.id)),
+  );
+  const requests = $derived(requestedOptions(data.requestableOptions));
+
+  const REQUEST_STATUS: Record<
+    string,
+    { label: string; variant: 'outline' | 'secondary'; pip: string }
+  > = {
+    pending: { label: 'Waiting for an admin', variant: 'outline', pip: 'text-warning' },
+    done: { label: 'Approved', variant: 'secondary', pip: 'text-success' },
+    rejected: { label: 'Rejected', variant: 'outline', pip: 'text-destructive' },
+  };
+
+  // The colour of a character's status pip.
+  const PIP = {
+    on: 'text-success',
+    off: 'text-standing-neutral',
+    attention: 'text-warning',
+    inherited: 'text-primary',
+  };
+
+  function pipOf(character: SyncCharacter, state: string): keyof typeof PIP {
+    if (state === 'inherited') {
+      return 'inherited';
+    }
+    if (state === 'reauth' || state === 'grant') {
+      return 'attention';
+    }
+    return character.should_sync ? 'on' : 'off';
+  }
 
   let requestOpen = $state(false);
 
@@ -68,312 +105,342 @@
 
 <PageTitle title="Standings" />
 
-<AppLayout {breadcrumbs}>
-  {#if data.showSetupWizard}
-    <SetupWizard characters={data.characters} />
+{#if data.showSetupWizard}
+  <SetupWizard characters={data.characters} />
+{/if}
+
+<AppShell
+  title="Standings"
+  description={data.source
+    ? `Your characters mirror the contacts of ${data.source.entity_name ?? data.source.type}.`
+    : 'Your characters mirror the contacts of the standings source.'}
+  reauthNotice={false}
+>
+  {#snippet actions()}
+    {#if data.requestableOptions.length > 0}
+      <Dialog.Root bind:open={requestOpen}>
+        <Dialog.Trigger>
+          {#snippet child({ props })}
+            <Button type="button" variant="outline" {...props}>
+              <Plus />
+              Request standing
+            </Button>
+          {/snippet}
+        </Dialog.Trigger>
+        <Dialog.Content class="sm:max-w-md">
+          <Dialog.Header>
+            <Dialog.Title>Request standing</Dialog.Title>
+            <Dialog.Description>
+              Ask the admins to add one of your characters, corporations or alliances to the
+              standings.
+            </Dialog.Description>
+          </Dialog.Header>
+          <ul class="-mx-2 max-h-80 overflow-y-auto">
+            {#each data.requestableOptions as option (`${option.type}:${option.id}`)}
+              <li>
+                <button
+                  type="button"
+                  disabled={!canRequest(option, data.standings)}
+                  class="flex w-full items-center gap-3 px-2 py-2 text-left transition-[background-color,box-shadow] hover:bg-primary/8 hover:shadow-[inset_2px_0_0_var(--primary)] disabled:pointer-events-none disabled:opacity-60"
+                  onclick={() => requestStanding(option)}
+                >
+                  <EntityAvatar type={option.type} id={option.id} name={option.name} />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium"
+                      >{option.name ?? option.id}</span
+                    >
+                    <span class="label-caps block text-[0.6875rem] text-muted-foreground"
+                      >{option.type}</span
+                    >
+                  </span>
+                  {#if optionStatusLabel(option, data.standings)}
+                    <span class="text-xs text-muted-foreground">
+                      {optionStatusLabel(option, data.standings)}
+                    </span>
+                  {/if}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        </Dialog.Content>
+      </Dialog.Root>
+    {/if}
+    <Button type="button" onclick={syncMyCharacters}>
+      <RefreshCw />
+      Sync now
+    </Button>
+  {/snippet}
+
+  <!-- Source -->
+  {#if data.source}
+    <dl class="frame mb-10 grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 text-sm sm:grid-cols-4">
+      <div class="col-span-2 min-w-0 sm:col-span-1">
+        <dt class="label-caps text-[0.6875rem] text-muted-foreground">Source</dt>
+        <dd class="flex min-w-0 items-center gap-2 font-medium">
+          <EntityAvatar
+            type={data.source.type}
+            id={data.source.entity_id}
+            name={data.source.entity_name}
+            class="size-6"
+          />
+          <span class="truncate">{data.source.entity_name ?? data.source.entity_id}</span>
+        </dd>
+      </div>
+      {#if data.standings}
+        <div>
+          <dt class="label-caps text-[0.6875rem] text-muted-foreground">Standings</dt>
+          <dd class="font-mono text-base font-medium text-primary">{data.standings.length}</dd>
+        </div>
+      {/if}
+      <div>
+        <dt class="label-caps text-[0.6875rem] text-muted-foreground">Last refreshed</dt>
+        <dd class="font-mono text-[0.8125rem]">{lastRefreshed}</dd>
+      </div>
+      {#if nextRefreshIn}
+        <div>
+          <dt class="label-caps text-[0.6875rem] text-muted-foreground">Next refresh</dt>
+          <dd class="font-mono text-[0.8125rem]">{nextRefreshIn}</dd>
+        </div>
+      {/if}
+    </dl>
+  {:else}
+    <div class="mb-10">
+      <EmptyState title="No standings source yet">
+        An admin has to choose the character, corporation or alliance whose contacts everyone
+        mirrors. Until then there is nothing to sync.
+      </EmptyState>
+    </div>
   {/if}
-  <div class="flex flex-1 flex-col gap-6 p-4">
-    <!-- Source -->
-    <Card.Root>
-      <Card.Header class="flex flex-row items-center gap-3">
-        {#if data.source}
-          <Avatar.Root class="h-10 w-10 shrink-0 overflow-hidden rounded">
-            {#if eveImage(data.source.type, data.source.entity_id)}
-              <Avatar.Image
-                src={eveImage(data.source.type, data.source.entity_id)}
-                alt={data.source.entity_name ?? ''}
-              />
-            {/if}
-            <Avatar.Fallback class="rounded text-xs uppercase">
-              {data.source.type.slice(0, 2)}
-            </Avatar.Fallback>
-          </Avatar.Root>
-        {/if}
-        <div>
-          <Card.Title>Standings source</Card.Title>
-          <Card.Description>
-            {#if data.source}
-              Mirroring
-              <span class="font-medium text-foreground"
-                >{data.source.entity_name ?? data.source.type}</span
-              >'s {data.source.type} contacts onto every opted-in character.
-            {:else}
-              No source has been configured yet.
-            {/if}
-          </Card.Description>
-        </div>
-      </Card.Header>
-      <Card.Content>
-        <dl class="grid gap-3 text-sm sm:grid-cols-3">
-          {#if data.standings}
-            <div>
-              <dt class="text-muted-foreground">Standings</dt>
-              <dd class="font-medium">{data.standings.length}</dd>
-            </div>
-          {/if}
-          <div>
-            <dt class="text-muted-foreground">Last refreshed</dt>
-            <dd class="font-medium">{lastRefreshed}</dd>
-          </div>
-          {#if nextRefreshIn}
-            <div>
-              <dt class="text-muted-foreground">Next refresh</dt>
-              <dd class="font-medium tabular-nums">{nextRefreshIn}</dd>
-            </div>
-          {/if}
-        </dl>
-      </Card.Content>
-    </Card.Root>
 
-    <!-- Current standings overview -->
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>Current standings</Card.Title>
-        <Card.Description>
-          The canonical standings pulled from the source. These are applied to every syncing
-          character.
-        </Card.Description>
-      </Card.Header>
-      <Card.Content>
-        {#if !data.canViewStandings}
-          <div class="flex flex-col items-center gap-2 py-10 text-center">
-            <Lock class="h-5 w-5 text-muted-foreground" />
-            <p class="text-sm font-medium">Standings are hidden</p>
-            <p class="max-w-sm text-sm text-muted-foreground">
-              None of your characters is eligible yet. Request a standing for a character,
-              corporation or alliance below &mdash; once an admin approves it, the standings unlock.
-            </p>
-          </div>
-        {:else if !data.standings || data.standings.length === 0}
-          <p class="py-8 text-center text-sm text-muted-foreground">
-            No standings have been pulled from the source yet.
-          </p>
-        {:else}
-          <div class="relative mb-3">
-            <Search
-              class="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+  <!-- Your characters -->
+  <section class="mb-12" aria-labelledby="characters-heading">
+    <SectionHeading
+      id="characters-heading"
+      title="Your characters"
+      description="Turn sync on for each character that should carry the standings. The star marks your main."
+    />
+    <ul class="rows divide-y border-b">
+      {#each data.characters as character (character.id)}
+        {@const state = syncState(character, reauthIds)}
+        <li class="px-2 py-3" data-test={`character-${character.id}`}>
+          <div class="flex items-center gap-3">
+            <EntityAvatar
+              type="character"
+              id={character.id}
+              name={character.name}
+              class="size-10"
             />
-            <Input
-              bind:value={standingsSearch}
-              type="search"
-              name="standings-search"
-              placeholder="Search standings..."
-              aria-label="Search standings"
-              class="pl-8"
-            />
-          </div>
-          {#if filteredStandings.length === 0}
-            <p class="py-8 text-center text-sm text-muted-foreground">
-              No standings match your search.
-            </p>
-          {:else}
-            <ul class="-mx-2">
-              {#each filteredStandings as standing (standing.contact_id)}
-                <li
-                  class="flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors odd:bg-muted/40 hover:bg-muted"
-                >
-                  <Avatar.Root class="h-5 w-5 shrink-0 overflow-hidden rounded-sm">
-                    {#if eveImage(standing.contact_type, standing.contact_id)}
-                      <Avatar.Image
-                        src={eveImage(standing.contact_type, standing.contact_id)}
-                        alt={`${standing.contact_id}`}
-                      />
-                    {/if}
-                    <Avatar.Fallback class="rounded-sm text-[8px] uppercase">
-                      {standing.contact_type.slice(0, 2)}
-                    </Avatar.Fallback>
-                  </Avatar.Root>
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-medium">
-                      {standing.name ?? standing.contact_id}
-                    </p>
-                    {#if standing.redundant_via}
-                      <p
-                        class="truncate text-xs text-amber-600 dark:text-amber-400"
-                        title={`This standing already applies through the ${standing.redundant_via.contact_type} and can be removed from the source.`}
-                      >
-                        Redundant via
-                        {standing.redundant_via.name ?? standing.redundant_via.contact_id}
-                      </p>
-                    {/if}
-                  </div>
-                  <span class="flex-1 truncate text-xs text-muted-foreground capitalize">
-                    {standing.contact_type}
-                  </span>
-                  <span
-                    class={[
-                      'w-12 shrink-0 text-right text-sm font-semibold tabular-nums',
-                      standingTextClass(standing.standing),
-                    ]}
-                  >
-                    {standingLabel(standing.standing)}
-                  </span>
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        {/if}
-      </Card.Content>
-    </Card.Root>
-
-    <!-- Your characters -->
-    <Card.Root>
-      <Card.Header class="flex flex-row items-start justify-between gap-4">
-        <div>
-          <Card.Title>Your characters</Card.Title>
-          <Card.Description>
-            Choose which characters mirror the source's standings, and star your main character.
-          </Card.Description>
-        </div>
-        <div class="flex items-center gap-2">
-          {#if data.requestableOptions.length > 0}
-            <Dialog.Root bind:open={requestOpen}>
-              <Dialog.Trigger>
-                {#snippet child({ props })}
-                  <Button type="button" variant="outline" size="sm" {...props}>
-                    <Plus class="h-4 w-4" />
-                    Request standing
-                  </Button>
-                {/snippet}
-              </Dialog.Trigger>
-              <Dialog.Content class="sm:max-w-md">
-                <Dialog.Header>
-                  <Dialog.Title>Request standing</Dialog.Title>
-                  <Dialog.Description>
-                    Ask the admins to add one of your characters, corporations or alliances to the
-                    standings.
-                  </Dialog.Description>
-                </Dialog.Header>
-                <ul class="-mx-2 max-h-80 overflow-y-auto">
-                  {#each data.requestableOptions as option (`${option.type}:${option.id}`)}
-                    <li>
-                      <button
-                        type="button"
-                        disabled={!canRequest(option, data.standings)}
-                        class="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-60"
-                        onclick={() => requestStanding(option)}
-                      >
-                        <Avatar.Root class="h-8 w-8 shrink-0 overflow-hidden rounded">
-                          {#if eveImage(option.type, option.id)}
-                            <Avatar.Image
-                              src={eveImage(option.type, option.id)}
-                              alt={option.name ?? ''}
-                            />
-                          {/if}
-                          <Avatar.Fallback class="rounded text-[10px] uppercase">
-                            {option.type.slice(0, 2)}
-                          </Avatar.Fallback>
-                        </Avatar.Root>
-                        <div class="flex-1">
-                          <p class="text-sm font-medium">{option.name ?? option.id}</p>
-                          <p class="text-xs text-muted-foreground capitalize">{option.type}</p>
-                        </div>
-                        {#if optionStatusLabel(option, data.standings)}
-                          <span class="text-xs text-muted-foreground">
-                            {optionStatusLabel(option, data.standings)}
-                          </span>
-                        {/if}
-                      </button>
-                    </li>
-                  {/each}
-                </ul>
-              </Dialog.Content>
-            </Dialog.Root>
-          {/if}
-          <Button type="button" variant="secondary" size="sm" onclick={syncMyCharacters}>
-            <RefreshCw class="h-4 w-4" />
-            Sync now
-          </Button>
-        </div>
-      </Card.Header>
-      <Card.Content>
-        <ul class="-mx-2">
-          {#each data.characters as character (character.id)}
-            <li
-              class="flex items-center gap-4 rounded-md px-2 py-3 transition-colors odd:bg-muted/40 hover:bg-muted"
-            >
-              <Avatar.Root class="h-9 w-9 overflow-hidden rounded">
-                <Avatar.Image src={eveImage('character', character.id)} alt={character.name} />
-                <Avatar.Fallback class="rounded text-xs"
-                  >{getInitials(character.name)}</Avatar.Fallback
-                >
-              </Avatar.Root>
-              <div class="flex-1">
-                <p class="flex items-center gap-2 text-sm font-medium">
-                  {character.name}
-                  {#if character.is_main}
-                    <Badge variant="secondary">Main</Badge>
-                  {/if}
+            <div class="min-w-0 flex-1">
+              <p class="flex items-center gap-2 font-medium">
+                <span class="truncate">{character.name}</span>
+                {#if character.is_main}
+                  <Badge variant="secondary">Main</Badge>
+                {/if}
+              </p>
+              {#if character.corporation || character.alliance}
+                <p class="truncate text-xs text-muted-foreground">
+                  {#if character.corporation}{character.corporation.name}{/if}
+                  {#if character.corporation && character.alliance}<span aria-hidden="true">
+                      &middot;
+                    </span>{/if}
+                  {#if character.alliance}{character.alliance.name}{/if}
                 </p>
-                <div class="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  {#if character.corporation}
-                    <span class="flex items-center gap-1">
-                      <img
-                        src={eveImage('corporation', character.corporation.id)}
-                        alt={character.corporation.name ?? ''}
-                        class="h-4 w-4 rounded-sm"
-                      />
-                      {character.corporation.name}
-                    </span>
-                  {/if}
-                  {#if character.alliance}
-                    <span class="flex items-center gap-1">
-                      <img
-                        src={eveImage('alliance', character.alliance.id)}
-                        alt={character.alliance.name ?? ''}
-                        class="h-4 w-4 rounded-sm"
-                      />
-                      {character.alliance.name}
-                    </span>
-                  {/if}
-                </div>
-              </div>
+              {/if}
+              <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span aria-hidden="true" class={['pip', PIP[pipOf(character, state)]]}></span>
+                {syncSummary(character, state)}
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1 sm:gap-3">
+              {#if !character.is_main}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="text-muted-foreground"
+                  title="Set as main character"
+                  aria-label={`Set ${character.name} as your main character`}
+                  onclick={() => setMainCharacter(character)}
+                >
+                  <Star />
+                </Button>
+              {/if}
+              {#if state === 'inherited'}
+                <Badge variant="outline">Inherited</Badge>
+              {:else if state === 'grant'}
+                <Button
+                  href={data.auth.sync_scopes_url}
+                  data-sveltekit-reload
+                  size="sm"
+                  variant="outline"
+                  title={`Grant ${character.name} the contact permissions needed to sync standings`}
+                >
+                  <KeyRound />
+                  Grant sync access
+                </Button>
+              {:else if state === 'toggle'}
+                <Switch
+                  checked={character.should_sync}
+                  aria-label={`Sync standings to ${character.name}`}
+                  onCheckedChange={(value) => toggleSync(character, value === true)}
+                />
+              {/if}
+            </div>
+          </div>
+          {#if state === 'reauth'}
+            <div
+              role="alert"
+              class="mt-3 flex flex-col gap-3 border border-warning-border bg-warning-soft px-3 py-2.5 text-sm shadow-[inset_3px_0_0_var(--warning)] sm:ml-13 sm:flex-row sm:items-center"
+            >
+              <p class="flex-1">
+                <span class="font-medium">{character.name} needs to log in again.</span>
+                Its token lapsed, so its contacts are not being synced.
+              </p>
+              <Button
+                href={data.auth.sync_scopes_url}
+                data-sveltekit-reload
+                size="sm"
+                variant="outline"
+                class="self-start sm:self-auto"
+              >
+                <KeyRound />
+                Log in again
+              </Button>
+            </div>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  </section>
 
-              <div class="flex items-center gap-3">
-                {#if !character.is_main}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    class="h-7 w-7 text-muted-foreground"
-                    title="Set as main character"
-                    aria-label={`Set ${character.name} as your main character`}
-                    onclick={() => setMainCharacter(character)}
-                  >
-                    <Star class="h-4 w-4" />
-                  </Button>
-                {/if}
-                <span class="text-xs text-muted-foreground">
-                  {#if character.inherits_source}
-                    Inherits the source
-                  {:else if character.should_sync && character.has_write_scope}
-                    {character.synced_contacts_count} synced
-                  {/if}
-                </span>
-                {#if character.inherits_source}
-                  <Badge variant="outline">Inherited</Badge>
-                {:else if !character.has_write_scope}
-                  <a
-                    href={data.auth.sync_scopes_url}
-                    data-sveltekit-reload
-                    class="inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:underline dark:text-amber-400"
-                    title={`Grant ${character.name} the contact permissions needed to sync standings`}
-                  >
-                    <KeyRound class="h-3 w-3" />
-                    Grant sync access
-                  </a>
-                {:else}
-                  <Switch
-                    checked={character.should_sync}
-                    aria-label={`Toggle standings sync for ${character.name}`}
-                    onCheckedChange={(value) => toggleSync(character, value === true)}
-                  />
-                {/if}
+  <!-- Current standings -->
+  <section class="mb-12" aria-labelledby="standings-heading">
+    <SectionHeading
+      id="standings-heading"
+      title="Current standings"
+      description="The standings of the source, applied to every syncing character."
+    />
+    {#if !data.source}
+      <EmptyState title="No standings yet">
+        Standings appear here once an admin sets a source.
+      </EmptyState>
+    {:else if !data.canViewStandings}
+      <EmptyState title="Standings are hidden" icon={Lock}>
+        None of your characters has a standing yet. Request one for a character, corporation or
+        alliance. Once an admin approves it, the list unlocks.
+      </EmptyState>
+    {:else if !data.standings || data.standings.length === 0}
+      <EmptyState title="The source has no standings yet">
+        Nothing has been pulled from the source so far. The next refresh brings them in.
+      </EmptyState>
+    {:else}
+      <div class="relative mb-4 max-w-sm">
+        <Search
+          class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          bind:value={standingsSearch}
+          type="search"
+          name="standings-search"
+          placeholder="Search standings"
+          aria-label="Search standings"
+          class="pl-8"
+        />
+      </div>
+      {#if filteredStandings.length === 0}
+        <EmptyState title="No standings match your search.">Try part of a name instead.</EmptyState>
+      {:else}
+        <table class="w-full table-fixed text-sm">
+          <thead>
+            <tr class="label-caps border-b text-left text-[0.6875rem] text-muted-foreground">
+              <th scope="col" class="px-2 py-2 font-semibold">Name</th>
+              <th scope="col" class="hidden w-32 py-2 font-semibold sm:table-cell">Type</th>
+              <th scope="col" class="w-24 px-2 py-2 text-right font-semibold">Standing</th>
+            </tr>
+          </thead>
+          <tbody class="rows divide-y">
+            {#each filteredStandings as standing (standing.contact_id)}
+              <tr>
+                <td class="py-2 pr-3 pl-2">
+                  <div class="flex min-w-0 items-center gap-2.5">
+                    <EntityAvatar
+                      type={standing.contact_type}
+                      id={standing.contact_id}
+                      name={standing.name}
+                      class="size-6"
+                    />
+                    <div class="min-w-0">
+                      <p class="truncate font-medium" data-test="standing-name">
+                        {standing.name ?? standing.contact_id}
+                      </p>
+                      {#if standing.redundant_via}
+                        <p
+                          class="truncate text-xs text-warning"
+                          title={`This standing already applies through the ${standing.redundant_via.contact_type} and can be removed from the source.`}
+                        >
+                          Redundant via
+                          {standing.redundant_via.name ?? standing.redundant_via.contact_id}
+                        </p>
+                      {/if}
+                      <p class="text-xs text-muted-foreground capitalize sm:hidden">
+                        {standing.contact_type}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td
+                  class="label-caps hidden py-2 text-[0.6875rem] text-muted-foreground sm:table-cell"
+                >
+                  {standing.contact_type}
+                </td>
+                <td
+                  class={[
+                    'px-2 py-2 text-right font-mono font-medium',
+                    standingTextClass(standing.standing),
+                  ]}
+                >
+                  {standingLabel(standing.standing)}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    {/if}
+  </section>
+
+  <!-- Your requests -->
+  {#if data.requestableOptions.length > 0}
+    <section aria-labelledby="requests-heading">
+      <SectionHeading
+        id="requests-heading"
+        title="Your requests"
+        description="Standings you asked the admins for."
+      />
+      {#if requests.length === 0}
+        <EmptyState title="No requests yet">
+          Use Request standing above to ask the admins for one.
+        </EmptyState>
+      {:else}
+        <ul class="rows divide-y border-b">
+          {#each requests as option (`${option.type}:${option.id}`)}
+            <li class="flex items-center gap-3 px-2 px-2 py-3">
+              <EntityAvatar type={option.type} id={option.id} name={option.name} />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">{option.name ?? option.id}</p>
+                <p class="label-caps text-[0.6875rem] text-muted-foreground">{option.type}</p>
               </div>
+              <Badge variant={REQUEST_STATUS[option.status!].variant}>
+                <span
+                  aria-hidden="true"
+                  class={['pip size-1.5', REQUEST_STATUS[option.status!].pip]}
+                ></span>
+                {REQUEST_STATUS[option.status!].label}
+              </Badge>
             </li>
           {/each}
         </ul>
-      </Card.Content>
-    </Card.Root>
-  </div>
-</AppLayout>
+      {/if}
+    </section>
+  {/if}
+</AppShell>

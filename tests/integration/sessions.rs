@@ -77,6 +77,42 @@ async fn a_cross_site_form_is_refused() {
 }
 
 #[tokio::test]
+async fn a_form_through_a_proxy_that_renames_the_host_passes() {
+    let app = TestApp::new().await;
+    let user = app.user().await;
+    let character = app.character_of(user).await;
+    let browser = app.sign_in(user).await;
+    let cookie = browser.cookie.clone().expect("a cookie");
+
+    // The local preview's proxy hands the app `localhost:5315` with a
+    // matching origin and the real name in X-Forwarded-Host; Caddy keeps
+    // both as the browser sent them.
+    for (host, forwarded, origin) in [
+        ("localhost:5315", "bluebook.test", "http://localhost:5315"),
+        ("bluebook.test", "bluebook.test", "https://bluebook.test"),
+        ("localhost:5315", "bluebook.test", "https://bluebook.test"),
+    ] {
+        let response = app
+            .request(
+                Method::PUT,
+                &format!("/standings/{character}"),
+                header_map(&[
+                    ("host", host),
+                    ("x-forwarded-host", forwarded),
+                    ("origin", origin),
+                    ("sec-fetch-site", "same-origin"),
+                    ("cookie", cookie.as_str()),
+                    ("content-type", "application/json"),
+                    ("accept", "application/json"),
+                ]),
+                Body::from(json!({ "should_sync": true }).to_string()),
+            )
+            .await;
+        response.assert_done();
+    }
+}
+
+#[tokio::test]
 async fn a_form_without_browser_headers_passes() {
     let app = TestApp::new().await;
     let user = app.user().await;

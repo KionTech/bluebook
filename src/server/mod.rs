@@ -241,18 +241,21 @@ async fn reject_cross_site_mutations(request: Request, next: Next) -> Response {
 }
 
 /// Whether a URL (an `Origin` or `Referer`) names a host other than the
-/// one serving the request (the host the proxy forwarded, or `Host`); an
-/// opaque `null` origin counts as foreign.
+/// one serving the request: neither its `Host` nor the host a proxy in
+/// front forwarded (a local proxy may rename the host and the origin to
+/// its upstream, Caddy and Traefik keep both). An opaque `null` origin
+/// counts as foreign.
 fn is_cross_site_url(url: &str, headers: &HeaderMap) -> bool {
-    let host = headers
-        .get("x-forwarded-host")
-        .or_else(|| headers.get(header::HOST))
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or_default();
     let authority = url
         .strip_prefix("https://")
         .or_else(|| url.strip_prefix("http://"))
         .and_then(|rest| rest.split('/').next())
         .unwrap_or_default();
-    authority.is_empty() || !authority.eq_ignore_ascii_case(host)
+    if authority.is_empty() {
+        return true;
+    }
+    ![header::HOST.as_str(), "x-forwarded-host"]
+        .into_iter()
+        .filter_map(|name| headers.get(name).and_then(|value| value.to_str().ok()))
+        .any(|host| authority.eq_ignore_ascii_case(host))
 }

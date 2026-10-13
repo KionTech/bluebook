@@ -1,0 +1,43 @@
+# The shared origin, in production (the proxy image, deploy/Dockerfile,
+# behind Coolify's Traefik, which terminates TLS) and in the local stack
+# (docker-compose.yml, published on :5315). Backend paths (the page props,
+# the EVE login and its callback, the demo login, `/settings`' redirect,
+# the health page), and every request that is not a GET or HEAD (the forms
+# post to the URLs they always used), go to the api; pages and static
+# files to SvelteKit. Keep the path list in sync with
+# frontend/proxy-paths.ts.
+#
+# API_HOST and FRONTEND_HOST name the upstreams; production sets them to
+# the prefixed service names, the local stack keeps the defaults.
+{
+	# Traefik (or the portal) in front: keep its X-Forwarded-* headers, so
+	# the api and SvelteKit see the client's address and https.
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	# www.<domain>, when Coolify routes it here too, redirects to the apex.
+	@www header_regexp www Host ^www\.(.+)$
+	redir @www https://{re.www.1}{uri} permanent
+
+	encode zstd gzip
+	header {
+		X-Frame-Options SAMEORIGIN
+		X-XSS-Protection "1; mode=block"
+		X-Content-Type-Options nosniff
+	}
+
+	@axum {
+		path /api/* /up /eve /eve/* /demo-login /storage/* /settings
+	}
+	reverse_proxy @axum {$API_HOST:api}:3000
+
+	@mutation {
+		not method GET HEAD
+	}
+	reverse_proxy @mutation {$API_HOST:api}:3000
+
+	reverse_proxy {$FRONTEND_HOST:frontend}:3000
+}

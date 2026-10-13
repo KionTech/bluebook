@@ -1,0 +1,81 @@
+[package]
+name = "bluebook"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "bluebook.nicolaskion.dev: mirrors one EVE Online standings source onto the contact lists of every pilot who opts in"
+default-run = "bluebook"
+
+[dependencies]
+axum = "0.8"
+# The session cookie.
+axum-extra = { version = "0.12", features = ["cookie"] }
+dotenvy = "0.15"
+form_urlencoded = "1"
+hex = "0.4"
+# Verifies the EVE SSO access token against its published keys.
+jsonwebtoken = { version = "11", features = ["rust_crypto"] }
+rand = "0.10"
+regex = "1"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "form", "query"] }
+serde = { version = "1", features = ["derive"] }
+# Key order follows insertion, so the page props keep the order the
+# Laravel resources gave them.
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.11"
+sqlx = { version = "0.9", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "migrate",
+    "time",
+    "json",
+] }
+# Dates and timestamps; everything is UTC like the app always was.
+time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal"] }
+tower = "0.5"
+# Paths with a trailing slash reach the same route.
+tower-http = { version = "0.7", features = ["normalize-path"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+# NFC for the names ESI answers, as the ESI client normalized them.
+unicode-normalization = "0.1"
+# The `url` rule of the Discord settings form.
+url = "2"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
+
+[[bin]]
+name = "bluebook"
+path = "src/main.rs"
+
+[[bin]]
+name = "migrate"
+path = "src/bin/migrate.rs"
+
+[[bin]]
+name = "seed_demo"
+path = "src/bin/seed_demo.rs"
+
+[[bin]]
+name = "sync_standings"
+path = "src/bin/sync_standings.rs"
+
+[[bin]]
+name = "sync_affiliations"
+path = "src/bin/sync_affiliations.rs"
+
+[[bin]]
+name = "check_tokens"
+path = "src/bin/check_tokens.rs"
+
+# Handlers return `Result<_, Response>`, as in MutaMarket.
+[lints.clippy]
+result_large_err = "allow"
+
+# The RSA math of the token check is slow unoptimized.
+[profile.dev.package."*"]
+opt-level = 2

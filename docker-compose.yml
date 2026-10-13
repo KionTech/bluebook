@@ -1,0 +1,150 @@
+# The whole stack on http://localhost:5315:
+#   docker compose up --build
+# (the demo-seed service seeds the demo pilots, a standings source with
+# its contacts and a few requests; /demo-login signs in without EVE SSO)
+# The local preview on https://bluebook.test (portal):
+#   APP_URL=https://bluebook.test ORIGIN=https://bluebook.test docker compose up --build -d
+# Hot-reloading frontend instead of the built one:
+#   docker compose --profile dev up -d postgres api frontend-dev
+# Postgres alone, for `cargo run` + `npm run dev` on the host:
+#   docker compose up -d postgres
+#
+# Fixed ports, so the stack runs next to other projects: Postgres 5445,
+# the composed stack 5315. Nothing calls EVE's servers here unless
+# SCHEDULER_ENABLED is set and a real EVE application is configured.
+
+name: bluebook
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: bluebook-postgres
+    environment:
+      POSTGRES_USER: bluebook
+      POSTGRES_PASSWORD: bluebook
+      POSTGRES_DB: bluebook
+    ports:
+      - "127.0.0.1:5445:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bluebook"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    logging: *logging
+
+  api:
+    build: .
+    image: bluebook-api
+    container_name: bluebook-api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://bluebook:bluebook@postgres:5432/bluebook
+      BIND_ADDR: 0.0.0.0:3000
+      APP_URL: ${APP_URL:-http://localhost:5315}
+      RUST_LOG: ${RUST_LOG:-info}
+      # The demo pilots' characters are admins here, so the admin pages
+      # can be previewed.
+      EVE_ADMIN_CHARACTER_ID: ${EVE_ADMIN_CHARACTER_ID:-2100000001}
+      # The demo login is a dev convenience (and the e2e suite uses it).
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+      # The schedule calls ESI; off unless asked for.
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    develop:
+      watch:
+        - { action: rebuild, path: ./src }
+        - { action: rebuild, path: ./migrations }
+        - { action: rebuild, path: ./Cargo.toml }
+    logging: *logging
+
+  # One-shot: creates or refreshes the demo pilots and their sample data.
+  # Safe to repeat; it migrates first and replaces the demo rows.
+  demo-seed:
+    build: .
+    # The api's image, so `up --no-build` runs it without a build of its
+    # own.
+    image: bluebook-api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://bluebook:bluebook@postgres:5432/bluebook
+      APP_URL: ${APP_URL:-http://localhost:5315}
+    command: seed_demo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    logging: *logging
+
+  frontend:
+    build: ./frontend
+    image: bluebook-frontend
+    container_name: bluebook-frontend
+    environment:
+      AXUM_URL: http://api:3000
+      ORIGIN: ${ORIGIN:-http://localhost:5315}
+      # adapter-node takes the scheme and host of page URLs from the
+      # proxy: http://localhost:5315 directly, https://bluebook.test
+      # through the portal.
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+    depends_on:
+      - api
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend
+          ignore: [node_modules/, .svelte-kit/, build/]
+    logging: *logging
+
+  # The production proxy's Caddyfile (deploy/Dockerfile), mounted so an
+  # edit only needs a restart.
+  proxy:
+    image: caddy:2.11.4
+    container_name: bluebook-proxy
+    ports:
+      - "127.0.0.1:5315:80"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+    logging: *logging
+
+  frontend-dev:
+    image: node:26
+    container_name: bluebook-frontend-dev
+    profiles: ["dev"]
+    working_dir: /app
+    command: sh -c "npm ci && npx vite dev --host 0.0.0.0 --port 5315"
+    environment:
+      AXUM_URL: http://api:3000
+      VITE_POLL_WATCH: "1"
+    ports:
+      - "127.0.0.1:5315:5315"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - api
+    logging: *logging
+
+volumes:
+  postgres-data:
+  frontend-node-modules:

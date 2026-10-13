@@ -92,9 +92,18 @@ async fn character(
     Ok(())
 }
 
-/// The demo pilot's user, created (with its character) when missing.
+/// The demo pilot's user, created (with its character) when missing; a
+/// seeded pilot is left as the seed made it.
 pub async fn pilot(pool: &PgPool, now: OffsetDateTime, character_id: i64) -> sqlx::Result<i64> {
-    owner(pool, character_id, DEMO_PILOT, None, None, true, now).await
+    let existing: Option<Option<i64>> =
+        sqlx::query_scalar("select user_id from characters where id = $1")
+            .bind(character_id)
+            .fetch_optional(pool)
+            .await?;
+    match existing.flatten() {
+        Some(user_id) => Ok(user_id),
+        None => owner(pool, character_id, DEMO_PILOT, None, None, true, now).await,
+    }
 }
 
 /// The demo pilot in an alliance that is the source, an alt that needs a

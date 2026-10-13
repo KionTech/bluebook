@@ -74,6 +74,12 @@ async fn the_demo_seed_builds_a_world_and_can_run_again() {
         .browser(&Browser::guest());
     let dashboard = app.page(&browser, "/dashboard").await.json();
     assert_eq!(dashboard["auth"]["is_admin"], true);
+    // The login leaves the seeded pilot as it is: in the source alliance.
+    assert_eq!(dashboard["characters"][0]["inherits_source"], true);
+    assert_eq!(
+        dashboard["auth"]["active_character"]["corporation"]["name"],
+        "Demo Corp"
+    );
     assert!(
         dashboard["standings"]
             .as_array()

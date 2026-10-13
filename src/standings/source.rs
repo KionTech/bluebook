@@ -1,7 +1,8 @@
 //! The source refresh (`StandingsSourceService`): an admin character that
 //! can read the source fetches its contacts; when they changed they
 //! become the canonical standings, their entities are stored, and pending
-//! requests that got a direct blue standing are done.
+//! requests that got a direct blue standing are done. A 403 (the reader
+//! lacks the in-game role) marks the source unreadable until a read works.
 
 use std::collections::HashMap;
 
@@ -62,12 +63,25 @@ async fn try_refresh(state: &AppState) -> Result<Option<bool>, sqlx::Error> {
         Ok(contacts) => contacts,
         Err(error) => {
             tracing::warn!(%error, "the source could not be read");
+            if error.is_forbidden() {
+                // The reader lacks the in-game role: the admins are told
+                // (the shared `source_unreadable`, the Discord alert); the
+                // token stays.
+                sqlx::query(
+                    "update standings_sources set unreadable_since = coalesce(unreadable_since, $1)",
+                )
+                .bind(state.clock.now())
+                .execute(&state.pool)
+                .await?;
+            }
             return Ok(None);
         }
     };
     let changed = store_contacts(state, &contacts).await?;
     let now = state.clock.now();
-    sqlx::query("update standings_sources set last_synced_at = $1, updated_at = $1")
+    sqlx::query(
+        "update standings_sources set last_synced_at = $1, updated_at = $1, unreadable_since = null",
+    )
         .bind(now)
         .execute(&state.pool)
         .await?;

@@ -79,21 +79,26 @@ pub struct Refreshed {
 
 #[derive(Debug)]
 pub enum RefreshError {
-    /// EVE answered with an error status (after the tries for a server
-    /// error): the refresh token is dead.
-    Rejected(u16),
-    /// EVE could not be reached; the token is left alone.
-    Network(String),
+    /// EVE said the refresh token is no good any more (`invalid_grant`:
+    /// revoked, expired or used up). The only answer that kills a token.
+    Dead(String),
+    /// Anything else: EVE unreachable, a timeout, a server error after the
+    /// tries, rate limits, a client error that says nothing about the
+    /// token. The token is kept and tried again later.
+    Transient(String),
 }
 
 impl fmt::Display for RefreshError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RefreshError::Rejected(status) => write!(f, "refresh rejected with {status}"),
-            RefreshError::Network(error) => write!(f, "SSO unreachable: {error}"),
+            RefreshError::Dead(reason) => write!(f, "refresh token rejected: {reason}"),
+            RefreshError::Transient(reason) => write!(f, "{reason}"),
         }
     }
 }
+
+/// The OAuth error codes that mean the refresh token itself is dead.
+const DEAD_TOKEN_ERRORS: [&str; 2] = ["invalid_grant", "invalid_token"];
 
 #[derive(Deserialize)]
 struct TokenAnswer {
@@ -230,8 +235,9 @@ impl SsoClient {
     }
 
     /// Refreshes a stored token: tried five times while EVE answers with a
-    /// server error, a second apart; any other failed status, or a server
-    /// error on the last try, is a rejection.
+    /// server error, a second apart. Only a 400 or 401 whose OAuth error
+    /// says the grant is dead is `Dead`; every other failure is
+    /// `Transient`.
     pub async fn refresh(&self, refresh_token: &str) -> Result<Refreshed, RefreshError> {
         let mut status = 0;
         for attempt in 1..=REFRESH_TRIES {
@@ -245,22 +251,28 @@ impl SsoClient {
                 ])
                 .send()
                 .await
-                .map_err(|error| RefreshError::Network(error.to_string()))?;
+                .map_err(|error| RefreshError::Transient(format!("SSO unreachable: {error}")))?;
             status = response.status().as_u16();
             if response.status().is_success() {
-                return response
-                    .json()
-                    .await
-                    .map_err(|error| RefreshError::Network(error.to_string()));
+                return response.json().await.map_err(|error| {
+                    RefreshError::Transient(format!("unexpected SSO answer: {error}"))
+                });
             }
             if status < 500 {
+                let body: Value = response.json().await.unwrap_or(Value::Null);
+                let error = body["error"].as_str().unwrap_or_default();
+                if matches!(status, 400 | 401) && DEAD_TOKEN_ERRORS.contains(&error) {
+                    return Err(RefreshError::Dead(error.to_owned()));
+                }
                 break;
             }
             if attempt < REFRESH_TRIES {
                 tokio::time::sleep(self.config.refresh_retry_delay).await;
             }
         }
-        Err(RefreshError::Rejected(status))
+        Err(RefreshError::Transient(format!(
+            "token refresh failed ({status})"
+        )))
     }
 }
 

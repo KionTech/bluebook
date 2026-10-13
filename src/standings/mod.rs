@@ -23,6 +23,18 @@ pub fn key(kind: &str, id: i64) -> String {
     format!("{kind}:{id}")
 }
 
+/// SQL: the name of the subject of the standing request `r` asked through
+/// the character `c`: the character's own name (a character asks for
+/// itself), else the corporation or alliance by the subject's id. Laravel
+/// took those from the requester's current corporation or alliance, which
+/// named the wrong entity (or none) once the requester moved (FIXES.md,
+/// "Requests named the requester's corporation, not the one asked for").
+pub const SUBJECT_NAME_SQL: &str = "case r.subject_type
+        when 'character' then c.name
+        when 'corporation' then (select s.name from corporations s where s.id = r.subject_id)
+        else (select s.name from alliances s where s.id = r.subject_id)
+    end";
+
 /// The configured standings source.
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Source {
@@ -30,13 +42,16 @@ pub struct Source {
     pub kind: String,
     pub entity_id: i64,
     pub last_synced_at: Option<OffsetDateTime>,
+    /// The last read was refused (403) and none worked since.
+    pub unreadable_since: Option<OffsetDateTime>,
 }
 
 impl Source {
     /// `StandingsSource::current()`: the first row.
     pub async fn current(pool: &PgPool) -> sqlx::Result<Option<Source>> {
         sqlx::query_as(
-            "select type, entity_id, last_synced_at from standings_sources order by id limit 1",
+            "select type, entity_id, last_synced_at, unreadable_since from standings_sources
+             order by id limit 1",
         )
         .fetch_optional(pool)
         .await

@@ -182,3 +182,34 @@ async fn does_not_mail_characters_without_an_account() {
 
     assert_eq!(app.jobs_of("token_mail").await.len(), 0);
 }
+
+/// A token that keeps failing for three days (EVE unreachable, refreshes
+/// answering server errors) is kept, but its character is told as if it
+/// lapsed. FIXES.md, "Tokens were thrown away on any failure".
+#[tokio::test]
+async fn mails_characters_whose_write_token_has_failed_for_three_days() {
+    let mut app = TestApp::new().await;
+    let sender = setup(&mut app).await;
+    let failing = synced(&app, "Failing", None).await;
+    let token = app.grant_scopes(failing, &[WRITE_CHARACTER_CONTACTS]).await;
+    let recent = synced(&app, "Recent", None).await;
+    let recent_token = app.grant_scopes(recent, &[WRITE_CHARACTER_CONTACTS]).await;
+    for (id, days) in [(token, 3), (recent_token, 2)] {
+        sqlx::query(
+            "update esi_tokens set failing_since = $2, last_failure = 'ESI answered 503' where id = $1",
+        )
+        .bind(id)
+        .bind(app.clock.now() - time::Duration::days(days))
+        .execute(&app.pool)
+        .await
+        .expect("a failing token");
+    }
+
+    assert_eq!(bluebook::standings::tokens::check(&app.state).await, 0);
+
+    assert_json_eq(
+        &json!([{ "sender_id": sender, "recipient_id": failing }]),
+        &json!(app.jobs_of("token_mail").await),
+    );
+    assert_eq!(app.count("esi_tokens").await, 3);
+}

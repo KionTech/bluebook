@@ -88,8 +88,36 @@ async fn run_step(app: &TestApp, step: &Value) {
     assert_json_eq(&step["jobs"], &golden::jobs(app).await);
 }
 
+/// The recorded outcome with the token and ledger rules of FIXES.md
+/// ("Tokens were thrown away on any failure", "A failed read of a
+/// character's contacts counted as no contacts").
+fn with_fixed_tokens(name: &str, golden: &mut Value) {
+    match name {
+        // A 403 is a missing in-game role: the reader's token stays, as in
+        // the run where nothing went wrong.
+        "sync_forbidden" => {
+            golden["rows"]["esi_tokens"] =
+                golden::load("background", "sync_unchanged")["rows"]["esi_tokens"].clone();
+        }
+        // The read of the character's contacts failed: the sync stops
+        // there, so no writes and no ledger rows for it.
+        "character_sync_unreadable" => {
+            golden["http"]
+                .as_array_mut()
+                .expect("calls")
+                .retain(|call| call["method"] == "GET");
+            golden["rows"]["character_synced_contacts"]
+                .as_array_mut()
+                .expect("ledger rows")
+                .retain(|row| row["character_id"] != json!(2_112_000_002));
+        }
+        _ => {}
+    }
+}
+
 async fn check(name: &str) {
-    let golden = golden::load("background", name);
+    let mut golden = golden::load("background", name);
+    with_fixed_tokens(name, &mut golden);
     let app = golden::app(&golden["sql"]).await;
     golden::configure_fakes(&app, &golden["fakes"]);
     for step in golden["steps"].as_array().expect("steps") {

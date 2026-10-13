@@ -73,22 +73,19 @@ fn label(kind: &str) -> String {
 struct RequestNames {
     kind: String,
     subject_id: i64,
+    subject: Option<String>,
     requester: Option<String>,
-    corporation: Option<String>,
-    alliance: Option<String>,
 }
 
 /// Announces a standing request; an error when the request is gone.
 pub async fn notify_request(state: &AppState, standing_request_id: i64) -> Result<(), String> {
-    let request: Option<RequestNames> = sqlx::query_as(
-        "select r.subject_type as kind, r.subject_id, c.name as requester,
-                co.name as corporation, al.name as alliance
+    let request: Option<RequestNames> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
+        "select r.subject_type as kind, r.subject_id, {} as subject, c.name as requester
              from standing_requests r
              join characters c on c.id = r.requested_by_character_id
-             left join corporations co on co.id = c.corporation_id
-             left join alliances al on al.id = c.alliance_id
              where r.id = $1",
-    )
+        crate::standings::SUBJECT_NAME_SQL
+    )))
     .bind(standing_request_id)
     .fetch_optional(&state.pool)
     .await
@@ -96,9 +93,8 @@ pub async fn notify_request(state: &AppState, standing_request_id: i64) -> Resul
     let Some(RequestNames {
         kind,
         subject_id,
+        subject,
         requester,
-        corporation,
-        alliance,
     }) = request
     else {
         return Err(format!(
@@ -109,12 +105,7 @@ pub async fn notify_request(state: &AppState, standing_request_id: i64) -> Resul
     let Some(webhook) = webhook else {
         return Ok(());
     };
-    let subject = match kind.as_str() {
-        "character" => requester.clone(),
-        "corporation" => corporation,
-        _ => alliance,
-    }
-    .unwrap_or_else(|| subject_id.to_string());
+    let subject = subject.unwrap_or_else(|| subject_id.to_string());
     let requester = requester.unwrap_or_default();
     let payload = json!({
         "content": format!("{}A {kind} requested standings.", ping(&role)),

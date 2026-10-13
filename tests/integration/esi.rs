@@ -1,11 +1,12 @@
 //! ESI as `nicolaskion/eve` called it: the headers, the retries on a
-//! server error (reads only), and the token a 401 or 403 deletes.
+//! server error (reads only), and what each failure does to the token.
 
 use serde_json::json;
 
 use crate::common::factories::NewCharacter;
 use crate::common::{
     Canned, READ_CHARACTER_CONTACTS, READ_CORPORATION_CONTACTS, TestApp, WRITE_CHARACTER_CONTACTS,
+    assert_json_eq,
 };
 
 /// A corporation source with an admin that can read it.
@@ -84,7 +85,7 @@ async fn a_read_failing_five_times_fails() {
 }
 
 #[tokio::test]
-async fn a_client_error_is_not_tried_again() {
+async fn a_not_found_answer_is_not_tried_again() {
     let mut app = TestApp::new().await;
     readable_source(&mut app).await;
     app.esi.fail_path("/corporations/2000/contacts/", 404);
@@ -116,8 +117,9 @@ async fn contact_writes_are_never_tried_again() {
     assert_eq!(app.esi.requests().len(), 1);
 }
 
+/// FIXES.md, "Tokens were thrown away on any failure".
 #[tokio::test]
-async fn a_forbidden_answer_deletes_the_token_used() {
+async fn a_forbidden_answer_keeps_the_token_and_marks_the_source_unreadable() {
     let mut app = TestApp::new().await;
     let admin = readable_source(&mut app).await;
     let other = app.grant_scopes(admin, &[READ_CHARACTER_CONTACTS]).await;
@@ -125,25 +127,176 @@ async fn a_forbidden_answer_deletes_the_token_used() {
 
     assert_eq!(bluebook::standings::source::refresh(&app.state).await, None);
 
-    // The corporation token went; the other one stays.
-    let left: Vec<i64> = app
-        .rows("select id from esi_tokens")
+    // A missing in-game role is no dead token: both stay, unmarked.
+    assert_eq!(app.count("esi_tokens").await, 2);
+    assert_eq!(
+        app.scalar("select count(*) from esi_tokens where failing_since is not null")
+            .await,
+        json!(0)
+    );
+    assert!(other > 0);
+    assert_eq!(
+        app.scalar("select unreadable_since is not null from standings_sources")
+            .await,
+        json!(true)
+    );
+    let user: i64 = sqlx::query_scalar("select user_id from characters where id = $1")
+        .bind(admin)
+        .fetch_one(&app.pool)
         .await
-        .into_iter()
-        .map(|row| row["id"].as_i64().expect("an id"))
-        .collect();
-    assert_eq!(left, vec![other]);
+        .expect("an owner");
+    let props = app
+        .page(&app.sign_in(user).await, "/dashboard")
+        .await
+        .json();
+    assert_eq!(props["auth"]["source_unreadable"], true);
 }
 
 #[tokio::test]
-async fn an_unauthorized_answer_deletes_the_token_used() {
+async fn a_read_that_works_again_clears_the_unreadable_mark() {
+    let mut app = TestApp::new().await;
+    readable_source(&mut app).await;
+    app.esi.queue(
+        "GET /corporations/2000/contacts/",
+        vec![Canned {
+            status: 403,
+            body: json!({ "error": "forbidden" }),
+        }],
+    );
+    app.esi.contacts("corporations/2000", &[]);
+
+    assert_eq!(bluebook::standings::source::refresh(&app.state).await, None);
+    assert_eq!(
+        bluebook::standings::source::refresh(&app.state).await,
+        Some(false)
+    );
+
+    assert_eq!(
+        app.scalar("select unreadable_since is null from standings_sources")
+            .await,
+        json!(true)
+    );
+}
+
+#[tokio::test]
+async fn an_unauthorized_answer_refreshes_the_token_and_tries_again() {
+    let mut app = TestApp::new().await;
+    readable_source(&mut app).await;
+    app.esi
+        .contacts("corporations/2000", &[(100, "faction", 5.0)]);
+    app.esi.queue(
+        "GET /corporations/2000/contacts/",
+        vec![Canned {
+            status: 401,
+            body: json!({ "error": "token is expired" }),
+        }],
+    );
+
+    assert_eq!(
+        bluebook::standings::source::refresh(&app.state).await,
+        Some(true)
+    );
+
+    assert_eq!(app.sso.requests().len(), 1);
+    let requests = app.esi.requests();
+    assert_eq!(requests.len(), 2);
+    assert_eq!(
+        requests[1].header("authorization"),
+        Some("Bearer refreshed-access-1")
+    );
+    assert_eq!(app.count("esi_tokens").await, 1);
+}
+
+/// FIXES.md, "Tokens were thrown away on any failure".
+#[tokio::test]
+async fn an_unauthorized_answer_right_after_a_refresh_deletes_the_token() {
     let mut app = TestApp::new().await;
     readable_source(&mut app).await;
     app.esi.fail_path("/corporations/2000/contacts/", 401);
 
-    bluebook::standings::source::refresh(&app.state).await;
+    assert_eq!(bluebook::standings::source::refresh(&app.state).await, None);
 
+    assert_eq!(app.sso.requests().len(), 1);
+    assert_eq!(app.esi.requests().len(), 2);
     assert_eq!(app.count("esi_tokens").await, 0);
+}
+
+#[tokio::test]
+async fn transient_failures_keep_the_token_and_mark_it_failing() {
+    for code in [420, 429, 500, 503] {
+        let mut app = TestApp::new().await;
+        readable_source(&mut app).await;
+        app.esi.fail_path("/corporations/2000/contacts/", code);
+
+        assert_eq!(bluebook::standings::source::refresh(&app.state).await, None);
+
+        assert_eq!(app.count("esi_tokens").await, 1, "{code}");
+        assert_json_eq(
+            &json!([{ "failing_since": "2026-06-25T14:00:00+00:00", "last_failure": format!("ESI answered {code}") }]),
+            &json!(app.rows(
+                "select to_char(failing_since at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"+00:00\"') as failing_since, last_failure from esi_tokens"
+            ).await),
+        );
+    }
+}
+
+#[tokio::test]
+async fn an_unreachable_esi_keeps_the_token() {
+    let mut app = TestApp::new().await;
+    readable_source(&mut app).await;
+    app.reconfigure(|config| config.esi.base_url = "http://127.0.0.1:1".to_owned());
+
+    assert_eq!(bluebook::standings::source::refresh(&app.state).await, None);
+
+    assert_eq!(app.count("esi_tokens").await, 1);
+    assert_eq!(
+        app.scalar("select failing_since is not null from esi_tokens")
+            .await,
+        json!(true)
+    );
+}
+
+#[tokio::test]
+async fn a_success_clears_the_failure_mark_but_keeps_its_start_while_failing() {
+    let mut app = TestApp::new().await;
+    readable_source(&mut app).await;
+    app.esi.contacts("corporations/2000", &[]);
+    app.esi.queue(
+        "GET /corporations/2000/contacts/",
+        (0..5)
+            .map(|_| Canned {
+                status: 502,
+                body: json!({}),
+            })
+            .collect(),
+    );
+
+    bluebook::standings::source::refresh(&app.state).await;
+    let first = app.scalar("select failing_since from esi_tokens").await;
+    assert!(!first.is_null());
+    app.clock.advance(time::Duration::hours(1));
+    app.esi.queue(
+        "GET /corporations/2000/contacts/",
+        (0..5)
+            .map(|_| Canned {
+                status: 502,
+                body: json!({}),
+            })
+            .collect(),
+    );
+    bluebook::standings::source::refresh(&app.state).await;
+    // Still failing: the mark keeps the first failure's time.
+    assert_eq!(
+        app.scalar("select failing_since from esi_tokens").await,
+        first
+    );
+
+    bluebook::standings::source::refresh(&app.state).await;
+    assert_eq!(
+        app.scalar("select failing_since is null and last_failure is null from esi_tokens")
+            .await,
+        json!(true)
+    );
 }
 
 #[tokio::test]

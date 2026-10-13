@@ -1,11 +1,12 @@
 //! `standings:check-tokens`, daily: every character that syncs but lost
-//! its write token gets an EVE mail from the source's reader, at most
-//! once every three days. Only characters on an account (FIXES.md,
+//! its write token, or whose write token has kept failing for three days
+//! (`tokens::LONG_FAILING`), gets an EVE mail from the source's reader, at
+//! most once every three days. Only characters on an account (FIXES.md,
 //! "Removed characters were mailed about lapsed tokens forever").
 
 use time::Duration;
 
-use crate::auth::tokens::has_scope;
+use crate::auth::tokens::{has_scope, usable_sql};
 use crate::jobs::{self, Job};
 use crate::scopes::{SEND_MAIL, WRITE_CHARACTER_CONTACTS};
 use crate::server::AppState;
@@ -35,15 +36,19 @@ async fn try_check(state: &AppState) -> sqlx::Result<()> {
             return Ok(());
         }
     };
-    let lapsed: Vec<(i64, Option<i64>, Option<i64>)> = sqlx::query_as(
-        "select c.id, c.corporation_id, c.alliance_id from characters c
+    let lapsed: Vec<(i64, Option<i64>, Option<i64>)> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "select c.id, c.corporation_id, c.alliance_id from characters c
          where c.should_sync and c.user_id is not null
-            and not exists (select 1 from esi_tokens t where t.character_id = c.id and $1 = any(t.scopes))
+            and not exists (select 1 from esi_tokens t
+                where t.character_id = c.id and $1 = any(t.scopes) and {})
          order by c.id",
-    )
-    .bind(WRITE_CHARACTER_CONTACTS)
-    .fetch_all(&state.pool)
-    .await?;
+            usable_sql("$2")
+        )))
+        .bind(WRITE_CHARACTER_CONTACTS)
+        .bind(state.clock.now())
+        .fetch_all(&state.pool)
+        .await?;
     let mut queued = 0;
     for (character_id, corporation_id, alliance_id) in lapsed {
         // Characters that inherit the standings need no token of their own.

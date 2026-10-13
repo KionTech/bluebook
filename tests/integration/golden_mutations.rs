@@ -33,8 +33,24 @@ fn redirect_of(location: &str, page: &str) -> Option<String> {
     })
 }
 
+/// The source is set through an admin character of the account now, not
+/// the active one (FIXES.md, "The source came from the active character,
+/// not an admin character"): with the alt active, picking the alliance
+/// does what it does with the admin character active.
+fn with_fixed_source(name: &str, golden: &mut Value) {
+    if name == "admin_source_no_alliance" {
+        let same = golden::load("mutations", "admin_source_same");
+        let active = golden["after"]["active_character"].clone();
+        for key in ["after", "rows", "jobs", "http"] {
+            golden[key] = same[key].clone();
+        }
+        golden["after"]["active_character"] = active;
+    }
+}
+
 async fn check(name: &str) {
-    let golden = golden::load("mutations", name);
+    let mut golden = golden::load("mutations", name);
+    with_fixed_source(name, &mut golden);
     let app = golden::app(&golden["sql"]).await;
     golden::configure_fakes(&app, &golden["fakes"]);
     let browser = browser(&app, &golden).await;

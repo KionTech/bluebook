@@ -1,9 +1,15 @@
 //! The sync of one character's in-game contacts with the source
 //! (`CharacterStandingsSyncService`): new standings are added, changed ones
 //! edited, and only contacts the sync wrote before and the source dropped
-//! are deleted; personal contacts are never touched. The ledger
-//! (`character_synced_contacts`) is then exactly the source's list, also
-//! when ESI refused a write (FIXES.md, needs owner decision).
+//! are deleted; personal contacts are never touched.
+//!
+//! A character whose contacts cannot be read is left alone this run (no
+//! writes, the ledger as it was). The ledger (`character_synced_contacts`)
+//! records what is in game because of the sync: contacts that already
+//! match, writes ESI accepted, and deletes that failed; a refused add or
+//! edit keeps the row it had (FIXES.md, "A failed read of a character's
+//! contacts counted as no contacts" and "The ledger recorded writes ESI
+//! refused").
 
 use std::collections::HashMap;
 
@@ -59,9 +65,12 @@ pub async fn sync(state: &AppState, character_id: i64) -> sqlx::Result<()> {
         sqlx::query_as("select contact_id, standing::float8 from source_contacts order by id")
             .fetch_all(&state.pool)
             .await?;
-    let current = current_contacts(state, character_id).await?;
-    let ledger: Vec<i64> = sqlx::query_scalar(
-        "select contact_id from character_synced_contacts where character_id = $1 order by id",
+    let Some(current) = current_contacts(state, character_id).await? else {
+        return Ok(());
+    };
+    let ledger: Vec<(i64, f64)> = sqlx::query_as(
+        "select contact_id, standing::float8 from character_synced_contacts
+         where character_id = $1 order by id",
     )
     .bind(character_id)
     .fetch_all(&state.pool)
@@ -69,28 +78,42 @@ pub async fn sync(state: &AppState, character_id: i64) -> sqlx::Result<()> {
 
     let mut to_add: ByStanding = Vec::new();
     let mut to_edit: ByStanding = Vec::new();
+    // The ledger after the sync, built as the writes succeed.
+    let mut kept: HashMap<i64, f64> = HashMap::new();
     for (id, standing) in &desired {
         match current.get(id) {
             None => group(&mut to_add, *standing, *id),
             Some(now) if (now - standing).abs() >= STANDING_EPSILON => {
                 group(&mut to_edit, *standing, *id);
             }
-            Some(_) => {}
+            Some(_) => {
+                kept.insert(*id, *standing);
+            }
         }
     }
     let to_delete: Vec<i64> = ledger
-        .into_iter()
+        .iter()
+        .map(|(id, _)| *id)
         .filter(|id| !desired.iter().any(|(wanted, _)| wanted == id) && current.contains_key(id))
         .collect();
+    let previous: HashMap<i64, f64> = ledger.into_iter().collect();
 
-    // Write results are not looked at, as before.
     for (method, groups) in [(Method::POST, &to_add), (Method::PUT, &to_edit)] {
         for (_, standing, ids) in groups {
             for chunk in ids.chunks(WRITE_CHUNK) {
-                if let Err(error) =
-                    esi::write_contacts(state, character_id, method.clone(), chunk, *standing).await
+                match esi::write_contacts(state, character_id, method.clone(), chunk, *standing)
+                    .await
                 {
-                    tracing::warn!(character_id, %error, "contacts not written");
+                    Ok(()) => kept.extend(chunk.iter().map(|id| (*id, *standing))),
+                    Err(error) => {
+                        tracing::warn!(character_id, %error, "contacts not written");
+                        // What was synced before is still in game.
+                        kept.extend(
+                            chunk
+                                .iter()
+                                .filter_map(|id| previous.get(id).map(|old| (*id, *old))),
+                        );
+                    }
                 }
             }
         }
@@ -98,16 +121,36 @@ pub async fn sync(state: &AppState, character_id: i64) -> sqlx::Result<()> {
     for chunk in to_delete.chunks(DELETE_CHUNK) {
         if let Err(error) = esi::delete_contacts(state, character_id, chunk).await {
             tracing::warn!(character_id, %error, "contacts not deleted");
+            // Still in game: deleted on a later run.
+            kept.extend(
+                chunk
+                    .iter()
+                    .filter_map(|id| previous.get(id).map(|old| (*id, *old))),
+            );
         }
     }
 
-    update_ledger(state, character_id, &desired).await
+    // In the source's order, then the leftovers in ledger order.
+    let mut rows: Vec<(i64, f64)> = desired
+        .iter()
+        .filter_map(|(id, _)| kept.remove(id).map(|standing| (*id, standing)))
+        .collect();
+    rows.extend(
+        to_delete
+            .iter()
+            .filter_map(|id| kept.remove(id).map(|standing| (*id, standing))),
+    );
+    update_ledger(state, character_id, &rows).await
 }
 
-/// The character's contacts in game; none when it cannot read them.
-async fn current_contacts(state: &AppState, character_id: i64) -> sqlx::Result<HashMap<i64, f64>> {
+/// The character's contacts in game: none when it has no read scope,
+/// `None` when the read failed.
+async fn current_contacts(
+    state: &AppState,
+    character_id: i64,
+) -> sqlx::Result<Option<HashMap<i64, f64>>> {
     if !has_scope(&state.pool, character_id, READ_CHARACTER_CONTACTS).await? {
-        return Ok(HashMap::new());
+        return Ok(Some(HashMap::new()));
     }
     match esi::contacts(
         state,
@@ -117,23 +160,27 @@ async fn current_contacts(state: &AppState, character_id: i64) -> sqlx::Result<H
     )
     .await
     {
-        Ok(contacts) => Ok(contacts
-            .into_iter()
-            .map(|contact| (contact.contact_id, contact.standing))
-            .collect()),
+        Ok(contacts) => Ok(Some(
+            contacts
+                .into_iter()
+                .map(|contact| (contact.contact_id, contact.standing))
+                .collect(),
+        )),
+        Err(esi::EsiError::Db(error)) => Err(error),
         Err(error) => {
-            tracing::warn!(character_id, %error, "contacts not read");
-            Ok(HashMap::new())
+            tracing::warn!(character_id, %error, "contacts not read, sync skipped");
+            Ok(None)
         }
     }
 }
 
+/// Sets the ledger to these rows.
 async fn update_ledger(
     state: &AppState,
     character_id: i64,
-    desired: &[(i64, f64)],
+    rows: &[(i64, f64)],
 ) -> sqlx::Result<()> {
-    let ids: Vec<i64> = desired.iter().map(|(id, _)| *id).collect();
+    let ids: Vec<i64> = rows.iter().map(|(id, _)| *id).collect();
     let now = state.clock.now();
     let mut tx = state.pool.begin().await?;
     sqlx::query(
@@ -143,7 +190,7 @@ async fn update_ledger(
     .bind(&ids)
     .execute(&mut *tx)
     .await?;
-    for (id, standing) in desired {
+    for (id, standing) in rows {
         sqlx::query(
             "insert into character_synced_contacts (character_id, contact_id, standing, created_at, updated_at)
              values ($1, $2, $3::float8::numeric(4, 2), $4, $4)

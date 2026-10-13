@@ -93,6 +93,15 @@ async fn check(name: &str) {
             if name.starts_with("admin_settings") {
                 with_tickers(&mut expected);
             }
+            if name == "admin_settings_alt" {
+                // The source options and the mail scope are the admin
+                // character's, not the alt's (FIXES.md, "The source came
+                // from the active character, not an admin character").
+                let admin = page_props(&golden::load("pages", "admin_settings"));
+                for key in ["sourceTypes", "adminCharacter"] {
+                    expected[key] = admin[key].clone();
+                }
+            }
             let mut actual = response.json();
             golden::unmock(&mut actual, &app);
             assert_json_eq(&expected, &actual);

@@ -238,17 +238,119 @@ async fn writes_in_chunks_of_one_hundred_and_deletes_in_chunks_of_twenty() {
     assert_eq!(post.query.as_deref(), Some("standing=5&watched=0"));
 }
 
+async fn ledger(app: &TestApp, character: i64) -> serde_json::Value {
+    serde_json::json!(
+        app.rows(&format!(
+            "select contact_id, standing::float8 as standing from character_synced_contacts
+             where character_id = {character} order by contact_id"
+        ))
+        .await
+    )
+}
+
+/// FIXES.md, "A failed read of a character's contacts counted as no
+/// contacts".
 #[tokio::test]
-async fn sets_the_ledger_even_when_the_writes_fail() {
+async fn a_failed_read_of_the_contacts_aborts_the_sync() {
     let app = TestApp::new().await;
     let character = syncing_character(&app).await;
     app.source_contact(100, "character", 5.0).await;
-    current_contacts(&app, character, &[]);
+    app.synced_contact(character, 300, 5.0).await;
     app.esi
-        .fail_path(&format!("POST /characters/{character}/contacts/"), 520);
+        .fail_path(&format!("GET /characters/{character}/contacts/"), 503);
+
+    sync(&app, character).await;
+
+    assert!(
+        app.esi
+            .requests()
+            .iter()
+            .all(|request| request.method.as_str() == "GET")
+    );
+    assert_json_eq(
+        &serde_json::json!([{ "contact_id": 300, "standing": 5 }]),
+        &ledger(&app, character).await,
+    );
+}
+
+/// FIXES.md, "The ledger recorded writes ESI refused".
+#[tokio::test]
+async fn the_ledger_records_only_writes_that_succeeded() {
+    let app = TestApp::new().await;
+    let character = syncing_character(&app).await;
+    app.source_contact(100, "character", 5.0).await;
+    app.source_contact(200, "character", 10.0).await;
+    app.source_contact(300, "character", -5.0).await;
+    app.source_contact(400, "character", 5.0).await;
+    app.synced_contact(character, 300, -10.0).await;
+    app.synced_contact(character, 400, 1.0).await;
+    current_contacts(&app, character, &[(200, 10.0), (300, -10.0), (400, 1.0)]);
+    // The add of 100 (+5) fails, the edit to -5 succeeds, the edit to +5
+    // fails.
+    app.esi.queue(
+        &format!("POST /characters/{character}/contacts/"),
+        vec![crate::common::Canned {
+            status: 520,
+            body: serde_json::json!({ "error": "unknown" }),
+        }],
+    );
+    app.esi.queue(
+        &format!("PUT /characters/{character}/contacts/"),
+        vec![
+            crate::common::Canned {
+                status: 200,
+                body: serde_json::json!({}),
+            },
+            crate::common::Canned {
+                status: 503,
+                body: serde_json::json!({ "error": "unavailable" }),
+            },
+        ],
+    );
 
     sync(&app, character).await;
 
     assert_eq!(writes(&app, "POST").len(), 1);
-    assert_eq!(app.count("character_synced_contacts").await, 1);
+    assert_eq!(writes(&app, "PUT").len(), 2);
+    assert_json_eq(
+        &serde_json::json!([
+            { "contact_id": 200, "standing": 10 },
+            { "contact_id": 300, "standing": -5 },
+            { "contact_id": 400, "standing": 1 },
+        ]),
+        &ledger(&app, character).await,
+    );
+}
+
+#[tokio::test]
+async fn a_failed_delete_keeps_its_ledger_row() {
+    let app = TestApp::new().await;
+    let character = syncing_character(&app).await;
+    app.synced_contact(character, 500, 5.0).await;
+    app.synced_contact(character, 600, 5.0).await;
+    // 600 is gone from the game already: nothing to delete, the row goes.
+    current_contacts(&app, character, &[(500, 5.0)]);
+    app.esi
+        .fail_path(&format!("DELETE /characters/{character}/contacts/"), 502);
+
+    sync(&app, character).await;
+
+    assert_eq!(writes(&app, "DELETE").len(), 1);
+    assert_json_eq(
+        &serde_json::json!([{ "contact_id": 500, "standing": 5 }]),
+        &ledger(&app, character).await,
+    );
+}
+
+#[tokio::test]
+async fn a_successful_delete_removes_its_ledger_row() {
+    let app = TestApp::new().await;
+    let character = syncing_character(&app).await;
+    app.synced_contact(character, 500, 5.0).await;
+    current_contacts(&app, character, &[(500, 5.0)]);
+
+    sync(&app, character).await;
+
+    assert_eq!(writes(&app, "DELETE").len(), 1);
+    assert_json_eq(&serde_json::json!([]), &ledger(&app, character).await);
 }

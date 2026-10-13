@@ -13,6 +13,7 @@ use super::account::{self, Account};
 use super::errors;
 use super::viewer::Viewer;
 use crate::auth::session;
+use crate::auth::tokens::usable_sql;
 use crate::scopes::{ADMIN_SCOPES, SYNC_SCOPES, WRITE_CHARACTER_CONTACTS, grant_url};
 use crate::standings::{Source, source};
 
@@ -55,29 +56,38 @@ async fn flash(state: &AppState, viewer: &Viewer) -> Result<Value, Response> {
 async fn auth(state: &AppState, account: &Account) -> Result<Value, Response> {
     let active = account.active_character(state).await?;
     let is_admin = account.is_admin(state);
+    // No admin character can read the source, or the last read was
+    // refused (403, a missing in-game role).
     let source_unreadable = if is_admin {
         match Source::current(&state.pool)
             .await
             .map_err(errors::server_error)?
         {
-            Some(source) => source::reader(state, &source)
-                .await
-                .map_err(errors::server_error)?
-                .is_none(),
+            Some(source) => {
+                source.unreadable_since.is_some()
+                    || source::reader(state, &source)
+                        .await
+                        .map_err(errors::server_error)?
+                        .is_none()
+            }
             None => false,
         }
     } else {
         false
     };
-    // Only characters that opted into syncing need the contact scopes.
-    let reauth: Vec<(i64, Option<String>)> = sqlx::query_as(
+    // Only characters that opted into syncing need the contact scopes; a
+    // token failing for three days counts as lapsed.
+    let reauth: Vec<(i64, Option<String>)> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "select c.id, c.name from characters c
          where c.user_id = $1 and c.should_sync
-            and not exists (select 1 from esi_tokens t where t.character_id = c.id and $2 = any(t.scopes))
+            and not exists (select 1 from esi_tokens t
+                where t.character_id = c.id and $2 = any(t.scopes) and {})
          order by c.id",
-    )
+        usable_sql("$3")
+    )))
     .bind(account.id)
     .bind(WRITE_CHARACTER_CONTACTS)
+    .bind(state.clock.now())
     .fetch_all(&state.pool)
     .await
     .map_err(errors::server_error)?;

@@ -119,6 +119,8 @@ struct EsiData {
     /// Only the exact answers; anything else is a 404, as the Laravel
     /// reference's fakes answered.
     strict: bool,
+    /// In strict mode, contact writes still succeed.
+    writes_succeed: bool,
     next_mail_id: i64,
     requests: Vec<Recorded>,
 }
@@ -228,6 +230,11 @@ impl MockEsi {
         self.with(|data| data.strict = true);
     }
 
+    /// Contact writes succeed even in strict mode.
+    pub fn writes_succeed(&self) {
+        self.with(|data| data.writes_succeed = true);
+    }
+
     /// `METHOD /path` (or `/path` for any method) answers a status.
     pub fn fail_path(&self, path: &str, code: u16) {
         self.with(|data| data.failures.insert(path.to_owned(), code));
@@ -327,7 +334,10 @@ async fn esi_any(
         }
         return response;
     }
-    if data.strict {
+    let is_write = matches!(method.as_str(), "POST" | "PUT" | "DELETE")
+        && path.starts_with("/characters/")
+        && path.ends_with("/contacts/");
+    if data.strict && !(data.writes_succeed && is_write) {
         return status(404).into_response();
     }
 
@@ -434,7 +444,7 @@ struct SsoData {
     code: String,
     /// Answers of the refresh grant, given once each, before the regular
     /// one.
-    refresh_answers: VecDeque<u16>,
+    refresh_answers: VecDeque<(u16, Value)>,
     token_status: Option<u16>,
     /// The answer of every refresh grant, instead of a numbered one.
     refresh_answer: Option<Value>,
@@ -503,13 +513,27 @@ impl MockSso {
         self.data.lock().expect("SSO lock").token_status = Some(code);
     }
 
-    /// The next refresh grants answer these statuses, one each.
+    /// The next refresh grants answer these statuses, one each; a 400 says
+    /// `invalid_grant` (the refresh token is dead), any other error status
+    /// a server error.
     pub fn queue_refresh(&self, statuses: &[u16]) {
+        for status in statuses {
+            let error = if *status == 400 {
+                "invalid_grant"
+            } else {
+                "server_error"
+            };
+            self.queue_refresh_with(*status, json!({ "error": error }));
+        }
+    }
+
+    /// The next refresh grant answers this status and body.
+    pub fn queue_refresh_with(&self, status: u16, body: Value) {
         self.data
             .lock()
             .expect("SSO lock")
             .refresh_answers
-            .extend(statuses);
+            .push_back((status, body));
     }
 
     /// Every refresh grant answers this.
@@ -572,14 +596,10 @@ async fn sso_token(
     let form: HashMap<String, String> = form_urlencoded::parse(&body).into_owned().collect();
     match form.get("grant_type").map(String::as_str) {
         Some("refresh_token") => {
-            if let Some(code) = data.refresh_answers.pop_front()
+            if let Some((code, body)) = data.refresh_answers.pop_front()
                 && code != 200
             {
-                return (
-                    status(code),
-                    axum::Json(json!({ "error": "invalid_grant" })),
-                )
-                    .into_response();
+                return (status(code), axum::Json(body)).into_response();
             }
             data.refreshes += 1;
             if let Some(answer) = &data.refresh_answer {

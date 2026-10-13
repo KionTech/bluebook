@@ -3,8 +3,12 @@
 //! affiliations, names, corporations, alliances) are tried five times, five
 //! seconds apart, while ESI answers with a server error; contact writes and
 //! mail are tried once. Authenticated calls use the character's token for
-//! the scope (`auth::tokens`), and a 401 or 403 deletes that token. A
-//! failure is an error; callers carry on without the data.
+//! the scope (`auth::tokens`). A 401 refreshes the token and tries once
+//! more; a second 401 right after the fresh refresh deletes it. A 403 (a
+//! missing in-game role) leaves the token alone. Rate limits, server
+//! errors and an unreachable ESI keep the token and mark it failing; a
+//! success clears the mark. A failure is an error; callers carry on
+//! without the data.
 
 use std::fmt;
 use std::sync::{Arc, Mutex};
@@ -325,46 +329,91 @@ struct Request<'a> {
     retry: bool,
 }
 
-/// An authenticated request with the character's token for the scope;
-/// a 401 or 403 deletes the token used.
+impl EsiError {
+    /// ESI answered 403: the character lacks the in-game role.
+    pub fn is_forbidden(&self) -> bool {
+        matches!(self, EsiError::Status(403))
+    }
+}
+
+/// An authenticated request with the character's token for the scope,
+/// with the token rules of the module doc.
 async fn authenticated(
     state: &AppState,
     character_id: i64,
     scope: &str,
     request: Request<'_>,
 ) -> Result<Answer, EsiError> {
-    let token = tokens::access_token(
-        &state.pool,
+    let pool = &state.pool;
+    let mut token = tokens::access_token(
+        pool,
         &state.sso,
         character_id,
         scope,
         state.clock.now(),
+        false,
     )
     .await?
     .ok_or(EsiError::NoToken)?;
-    let answer = state
-        .esi
-        .send(
-            request.method,
-            request.path,
-            request.query,
-            request.body,
-            Some(&token.access_token),
-            request.retry,
-        )
-        .await?;
-    if answer.status == 401 || answer.status == 403 {
-        tokens::delete(&state.pool, token.token_id).await?;
+    loop {
+        let sent = state
+            .esi
+            .send(
+                request.method.clone(),
+                request.path,
+                request.query,
+                request.body,
+                Some(&token.access_token),
+                request.retry,
+            )
+            .await;
+        let answer = match sent {
+            Ok(answer) => answer,
+            Err(error) => {
+                tokens::mark_failing(pool, token.token_id, &error.to_string(), state.clock.now())
+                    .await?;
+                return Err(error);
+            }
+        };
+        let status = answer.status;
+        if (200..300).contains(&status) {
+            tokens::mark_working(pool, token.token_id).await?;
+            return Ok(answer);
+        }
+        tracing::warn!(path = request.path, status, "ESI answered an error");
+        match status {
+            401 if token.refreshed => {
+                // Refused right after a fresh refresh: the token is dead.
+                tokens::delete(pool, token.token_id).await?;
+            }
+            401 => {
+                token = tokens::access_token(
+                    pool,
+                    &state.sso,
+                    character_id,
+                    scope,
+                    state.clock.now(),
+                    true,
+                )
+                .await?
+                .ok_or(EsiError::NoToken)?;
+                continue;
+            }
+            420 | 429 | 500.. => {
+                tokens::mark_failing(
+                    pool,
+                    token.token_id,
+                    &EsiError::Status(status).to_string(),
+                    state.clock.now(),
+                )
+                .await?;
+            }
+            // 403: a missing role, not a token problem; other client
+            // errors say nothing about the token either.
+            _ => {}
+        }
+        return Err(EsiError::Status(status));
     }
-    if !(200..300).contains(&answer.status) {
-        tracing::warn!(
-            path = request.path,
-            status = answer.status,
-            "ESI answered an error"
-        );
-        return Err(EsiError::Status(answer.status));
-    }
-    Ok(answer)
 }
 
 /// Every page of a contact list (`characters/{id}`, `corporations/{id}` or

@@ -195,6 +195,47 @@ async fn posts_a_standing_request_to_the_configured_discord_webhook_and_pings_th
     );
 }
 
+/// FIXES.md, "Requests named the requester's corporation, not the one
+/// asked for".
+#[tokio::test]
+async fn announces_a_request_by_its_subject_after_the_requester_moved() {
+    let app = TestApp::new().await;
+    app.discord_settings(Some(&app.discord.webhook()), None)
+        .await;
+    app.corporation(4001, Some("Asked Corp"), None, None).await;
+    app.corporation(4002, Some("New Corp"), None, None).await;
+    let character = app
+        .character(NewCharacter {
+            name: Some("Mover"),
+            corporation_id: Some(4002),
+            ..NewCharacter::default()
+        })
+        .await;
+    let request = app
+        .standing_request(NewRequest {
+            subject_type: Some("corporation"),
+            subject_id: Some(4001),
+            requested_by: Some(character),
+            ..NewRequest::default()
+        })
+        .await;
+
+    bluebook::jobs::enqueue(
+        &app.state,
+        &Job::DiscordRequest {
+            standing_request_id: request,
+        },
+    )
+    .await
+    .expect("a queued announcement");
+    bluebook::jobs::run_pending(&app.state).await;
+
+    assert_eq!(
+        app.discord.requests()[0].json()["embeds"][0]["title"],
+        "Asked Corp"
+    );
+}
+
 #[tokio::test]
 async fn skips_the_discord_webhook_when_none_is_configured() {
     let app = TestApp::new().await;

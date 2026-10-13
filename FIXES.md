@@ -100,6 +100,110 @@ Now: a failed refresh is the answer, no request goes out. The outcome
 
 Test: `esi_tokens::a_failed_refresh_sends_no_request`.
 
+### Tokens were thrown away on any failure
+
+Laravel: a failed refresh deleted the token whatever the reason (any
+error status, also a 5xx that survived the five tries), and any ESI 401
+or 403 on an authenticated call deleted the token used. An SSO outage or a
+rate limit cost every pilot their tokens, and a corporation source read by
+a character without the in-game role (403) killed the admin's token.
+
+Now a token is deleted only when it is certainly dead:
+
+- the refresh is answered 400 or 401 with the OAuth error `invalid_grant`
+  (or `invalid_token`), EVE's answer for a revoked or expired refresh
+  token;
+- ESI answers 401 right after a fresh refresh. A 401 on a token that was
+  not just refreshed refreshes it and tries once more.
+
+Everything else keeps the token: an unreachable SSO or ESI, timeouts,
+5xx after the tries, 420 and 429, other refresh errors (`invalid_client`,
+`invalid_request`). The token is marked failing (`failing_since`, the
+first failure in a row, and `last_failure`) and tried again on the next
+run; the next success clears the mark. A write token failing for three
+days counts as lapsed: the character is in `reauth_characters` and gets
+the token mail, but the token stays. A 403 never touches the token; on
+the source read it marks the source unreadable (`unreadable_since`, the
+admin banner and the Discord alert) until a read works again.
+
+Tests: `esi_tokens::a_refresh_answered_with_invalid_grant_deletes_the_token`,
+`esi_tokens::a_refresh_failing_five_times_keeps_the_token`,
+`esi_tokens::other_refresh_errors_keep_the_token`,
+`esi_tokens::an_unreachable_sso_keeps_the_token`,
+`esi_tokens::a_refresh_that_works_again_clears_the_failure_mark`,
+`esi::a_forbidden_answer_keeps_the_token_and_marks_the_source_unreadable`,
+`esi::a_read_that_works_again_clears_the_unreadable_mark`,
+`esi::an_unauthorized_answer_refreshes_the_token_and_tries_again`,
+`esi::an_unauthorized_answer_right_after_a_refresh_deletes_the_token`,
+`esi::transient_failures_keep_the_token_and_mark_it_failing`,
+`esi::an_unreachable_esi_keeps_the_token`,
+`esi::a_success_clears_the_failure_mark_but_keeps_its_start_while_failing`,
+`check_tokens::mails_characters_whose_write_token_has_failed_for_three_days`,
+`access_warnings::flags_a_character_whose_write_token_has_failed_for_three_days`,
+`golden_background::sync_forbidden` (expects the tokens kept).
+
+### A failed read of a character's contacts counted as no contacts
+
+Laravel: when the character's contacts could not be read (ESI down, a
+refused token), the sync went on as if the character had none: it sent
+every standing again as new contacts, and never deleted stale ones.
+
+Now: a failed read stops that character's sync for this run; nothing is
+written and its ledger stays as it was. A character without the read
+scope still gets every standing written, as before.
+
+Tests: `character_sync::a_failed_read_of_the_contacts_aborts_the_sync`,
+`golden_background::character_sync_unreadable` (expects only the read).
+
+### The ledger recorded writes ESI refused
+
+Laravel: after the writes, the ledger of synced contacts
+(`character_synced_contacts`) was set to the source's list, also for adds
+and edits ESI refused, so a contact that never reached the game counted as
+synced, and a stale one whose delete failed was forgotten and never
+deleted.
+
+Now the ledger records what is in game because of the sync: contacts that
+already match, adds and edits ESI accepted, and contacts whose delete
+failed (deleted on a later run). A refused add or edit keeps the row it
+had before.
+
+Tests: `character_sync::the_ledger_records_only_writes_that_succeeded`,
+`character_sync::a_failed_delete_keeps_its_ledger_row`,
+`character_sync::a_successful_delete_removes_its_ledger_row`.
+
+### The source came from the active character, not an admin character
+
+Laravel: the admin settings page and "Set source" used the active
+character. An admin whose active character was an alt set the source from
+the alt's corporation or alliance (or got "Your character has no alliance
+to use as a source."), which no admin character might be able to read.
+
+Now both use an admin character of the account: the active one first,
+then by id, the first that holds the source type's read scope and has
+that entity; without one, the active character when it is an admin, else
+the first admin character. The mail scope shown is the admin character's
+the same way.
+
+Tests: `admin_source::uses_an_admin_character_while_an_alt_is_active`,
+`admin_source::prefers_the_admin_character_that_can_read_the_source`,
+`admin_source::keeps_the_active_admin_character_when_no_one_can_read_yet`,
+`admin_settings::offers_the_admin_characters_entities_while_an_alt_is_active`,
+`golden_pages::admin_settings_alt`, `golden_mutations::admin_source_no_alliance`.
+
+### Requests named the requester's corporation, not the one asked for
+
+Laravel: a corporation or alliance request took its name from the
+requesting character's current corporation or alliance. Once the
+requester moved, the admin requests page and the Discord announcement
+named the wrong entity, or showed only the id.
+
+Now the name is the subject's own, looked up by its id (a character
+request still names the requesting character, which asks for itself).
+
+Tests: `admin::names_a_request_by_its_subject_after_the_requester_moved`,
+`standing_requests::announces_a_request_by_its_subject_after_the_requester_moved`.
+
 ## Deliberate changes
 
 ### One new login instead of a session bridge
@@ -186,18 +290,6 @@ Tests: `demo::the_demo_login_is_off_by_default`,
 
 Kept as Laravel has it, listed for the owner:
 
-- The destructive token rules: a failed refresh (any status, also a 5xx
-  that survived the retries) deletes the token, and any ESI 401 or 403 on
-  an authenticated call deletes the token used. A corporation source read
-  by a character that lacks the in-game role answers 403 and so kills the
-  admin's token.
-- A failed read of a character's contacts counts as "no contacts", so the
-  sync adds every standing again; and the ledger of what was written is
-  set to the source's list even when the writes failed.
-- The admin settings page and "Set source" use the active character, not
-  necessarily an admin character: an admin whose active character is an
-  alt sets the source from the alt's corporation or alliance, which no
-  admin character may be able to read.
 - The contact address in the ESI user agent (now the site's URL).
 - `factions` (the names of faction contacts) is static SDE data, imported
   once and never refreshed.

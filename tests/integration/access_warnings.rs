@@ -87,3 +87,35 @@ async fn does_not_flag_the_source_for_non_admins() {
     let props = app.page(&app.sign_in(user).await, "/dashboard").await;
     assert_eq!(props.json()["auth"]["source_unreadable"], false);
 }
+
+/// FIXES.md, "Tokens were thrown away on any failure".
+#[tokio::test]
+async fn flags_a_character_whose_write_token_has_failed_for_three_days() {
+    let app = TestApp::new().await;
+    let user = app.user().await;
+    let mut ids = Vec::new();
+    for (name, days) in [("Failing", 3), ("Recent", 1)] {
+        let id = app
+            .character(NewCharacter {
+                name: Some(name),
+                owner: Owner::User(user),
+                should_sync: true,
+                ..NewCharacter::default()
+            })
+            .await;
+        let token = app.grant_scopes(id, &[WRITE_CHARACTER_CONTACTS]).await;
+        sqlx::query("update esi_tokens set failing_since = $2 where id = $1")
+            .bind(token)
+            .bind(app.clock.now() - time::Duration::days(days))
+            .execute(&app.pool)
+            .await
+            .expect("a failing token");
+        ids.push(id);
+    }
+
+    let props = app.page(&app.sign_in(user).await, "/dashboard").await;
+    assert_json_eq(
+        &json!([{ "id": ids[0], "name": "Failing" }]),
+        &props.json()["auth"]["reauth_characters"],
+    );
+}

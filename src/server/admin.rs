@@ -59,11 +59,10 @@ struct RequestRow {
     created_at: time::OffsetDateTime,
     subject_type: String,
     subject_id: i64,
+    subject_name: Option<String>,
     requester: Option<String>,
     corporation_id: Option<i64>,
     alliance_id: Option<i64>,
-    corporation: Option<String>,
-    alliance: Option<String>,
 }
 
 /// A corporation or alliance of the pilot groups.
@@ -85,15 +84,14 @@ async fn requests(
     status: &str,
 ) -> sqlx::Result<Vec<Value>> {
     let rows: Vec<RequestRow> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "select r.id, r.status, r.created_at, r.subject_type, r.subject_id, c.name as requester,
-            c.corporation_id, c.alliance_id, co.name as corporation, al.name as alliance
+        "select r.id, r.status, r.created_at, r.subject_type, r.subject_id,
+            {} as subject_name, c.name as requester, c.corporation_id, c.alliance_id
          from standing_requests r
          join characters c on c.id = r.requested_by_character_id
-         left join corporations co on co.id = c.corporation_id
-         left join alliances al on al.id = c.alliance_id
          where {filter}
          order by r.created_at desc, r.id desc
-         limit $2 offset $3"
+         limit $2 offset $3",
+        standings::SUBJECT_NAME_SQL
     )))
     .bind(status)
     .bind(limit)
@@ -104,11 +102,6 @@ async fn requests(
     Ok(rows
         .into_iter()
         .map(|row| {
-            let name = match row.subject_type.as_str() {
-                "character" => row.requester.clone(),
-                "corporation" => row.corporation,
-                _ => row.alliance,
-            };
             let effective = resolver.resolve(&RequestChain {
                 subject_type: row.subject_type.clone(),
                 subject_id: row.subject_id,
@@ -119,7 +112,7 @@ async fn requests(
                 "id": row.id,
                 "status": row.status,
                 "created_at": iso8601(row.created_at),
-                "subject": { "type": row.subject_type, "id": row.subject_id, "name": name },
+                "subject": { "type": row.subject_type, "id": row.subject_id, "name": row.subject_name },
                 "requested_by": row.requester,
                 "effective_standing": effective,
             })
@@ -406,7 +399,7 @@ async fn groups(
     Ok(paginator.json(data))
 }
 
-/// The entity of the active character a source type picks.
+/// The entity of a character a source type picks.
 fn entity_of(character: &Character, kind: &str) -> (Option<i64>, Option<String>) {
     match kind {
         "character" => (Some(character.id), character.name.clone()),
@@ -429,8 +422,41 @@ fn label(kind: &str) -> String {
         .unwrap_or_default()
 }
 
-/// `/admin/settings`: the source and what the active character could make
-/// the source, its mail scope, and the Discord settings.
+/// The admin character of the account to act through for a scope (and,
+/// for a source type, the entity it gives): the account's admin
+/// characters, the active one first, holding the scope (and having that
+/// entity); else the active character when it is an admin; else the
+/// first admin character. FIXES.md, "The source came from the active
+/// character, not an admin character".
+async fn admin_character(
+    state: &AppState,
+    account: &Account,
+    scope: &str,
+    kind: Option<&str>,
+) -> Result<Character, Response> {
+    let active = account.active_character(state).await?;
+    let mut admins: Vec<&Character> = account
+        .characters
+        .iter()
+        .filter(|character| state.config.is_admin_character(character.id))
+        .collect();
+    admins.sort_by_key(|character| (character.id != active.id, character.id));
+    for character in &admins {
+        if kind.is_some_and(|kind| entity_of(character, kind).0.is_none()) {
+            continue;
+        }
+        if has_scope(&state.pool, character.id, scope)
+            .await
+            .map_err(errors::server_error)?
+        {
+            return Ok((*character).clone());
+        }
+    }
+    Ok(admins.first().map_or(active, |first| (*first).clone()))
+}
+
+/// `/admin/settings`: the source and what the account's admin characters
+/// could make the source, the mail scope, and the Discord settings.
 pub async fn settings(
     State(state): State<AppState>,
     viewer: Viewer,
@@ -438,10 +464,16 @@ pub async fn settings(
     uri: Uri,
 ) -> Result<Response, Response> {
     let (account, mut props) = admin_page(&state, &viewer, &headers, &uri).await?;
-    let admin = account.active_character(&state).await?;
     props.insert("source".to_owned(), source_summary(&state).await?);
     let mut types = Vec::new();
     for kind in SOURCE_TYPES {
+        let admin = admin_character(
+            &state,
+            &account,
+            standings::required_scope(kind),
+            Some(kind),
+        )
+        .await?;
         let (entity_id, entity_name) = entity_of(&admin, kind);
         let has_scope = has_scope(&state.pool, admin.id, standings::required_scope(kind))
             .await
@@ -456,6 +488,7 @@ pub async fn settings(
         }));
     }
     props.insert("sourceTypes".to_owned(), json!(types));
+    let admin = admin_character(&state, &account, SEND_MAIL, None).await?;
     let mail = has_scope(&state.pool, admin.id, SEND_MAIL)
         .await
         .map_err(errors::server_error)?;
@@ -505,8 +538,8 @@ async fn back_with(
     Ok(response)
 }
 
-/// `PUT /admin/standings`: the source becomes the active character's
-/// character, corporation or alliance; its standings are cleared when the
+/// `PUT /admin/standings`: the source becomes the admin character's
+/// (`admin_character`) character, corporation or alliance; its standings are cleared when the
 /// source changes.
 pub async fn update_source(
     State(state): State<AppState>,
@@ -530,7 +563,13 @@ pub async fn update_source(
     };
     errors_found.finish()?;
     let kind = kind.expect("a validated type");
-    let character = account.active_character(&state).await?;
+    let character = admin_character(
+        &state,
+        &account,
+        standings::required_scope(&kind),
+        Some(&kind),
+    )
+    .await?;
     let Some(entity_id) = entity_of(&character, &kind).0 else {
         return Err(invalid_field(
             "type",
@@ -549,7 +588,7 @@ pub async fn update_source(
         "insert into standings_sources (type, entity_id, last_synced_at, created_at, updated_at)
          values ($1, $2, null, $3, $3)
          on conflict ((true)) do update set type = excluded.type, entity_id = excluded.entity_id,
-            last_synced_at = null, updated_at = excluded.updated_at",
+            last_synced_at = null, unreadable_since = null, updated_at = excluded.updated_at",
     )
     .bind(&kind)
     .bind(entity_id)

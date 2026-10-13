@@ -203,3 +203,94 @@ async fn sync_now_reports_an_unreadable_source() {
         &props["flash"],
     );
 }
+
+/// FIXES.md, "The source came from the active character, not an admin
+/// character".
+#[tokio::test]
+async fn uses_an_admin_character_while_an_alt_is_active() {
+    let mut app = TestApp::new().await;
+    let (user, character, _) = admin(&mut app).await;
+    app.grant_scopes(character, &[READ_CORPORATION_CONTACTS])
+        .await;
+    app.corporation(7000, Some("Alt Corp"), None, None).await;
+    let alt = app
+        .character(NewCharacter {
+            owner: Owner::User(user),
+            corporation_id: Some(7000),
+            ..NewCharacter::default()
+        })
+        .await;
+    let browser = app.sign_in_as(user, alt).await;
+
+    app.put(
+        &browser,
+        "/admin/standings",
+        json!({ "type": "corporation" }),
+    )
+    .await
+    .assert_done();
+
+    assert_json_eq(
+        &json!([{ "type": "corporation", "entity_id": 2000 }]),
+        &source(&app).await,
+    );
+}
+
+#[tokio::test]
+async fn prefers_the_admin_character_that_can_read_the_source() {
+    let mut app = TestApp::new().await;
+    let (user, character, _) = admin(&mut app).await;
+    app.corporation(4000, Some("Other Corp"), None, None).await;
+    let reader = app
+        .character(NewCharacter {
+            owner: Owner::User(user),
+            corporation_id: Some(4000),
+            ..NewCharacter::default()
+        })
+        .await;
+    app.grant_scopes(reader, &[READ_CORPORATION_CONTACTS]).await;
+    app.admins(&[character, reader]);
+    let browser = app.sign_in_as(user, character).await;
+
+    app.put(
+        &browser,
+        "/admin/standings",
+        json!({ "type": "corporation" }),
+    )
+    .await
+    .assert_done();
+
+    assert_json_eq(
+        &json!([{ "type": "corporation", "entity_id": 4000 }]),
+        &source(&app).await,
+    );
+}
+
+#[tokio::test]
+async fn keeps_the_active_admin_character_when_no_one_can_read_yet() {
+    let mut app = TestApp::new().await;
+    let (user, character, _) = admin(&mut app).await;
+    app.corporation(4000, Some("Other Corp"), None, None).await;
+    let other = app
+        .character(NewCharacter {
+            owner: Owner::User(user),
+            corporation_id: Some(4000),
+            ..NewCharacter::default()
+        })
+        .await;
+    app.admins(&[character, other]);
+    let browser = app.sign_in_as(user, other).await;
+
+    app.put(
+        &browser,
+        "/admin/standings",
+        json!({ "type": "corporation" }),
+    )
+    .await
+    .assert_done();
+
+    assert_json_eq(
+        &json!([{ "type": "corporation", "entity_id": 4000 }]),
+        &source(&app).await,
+    );
+}

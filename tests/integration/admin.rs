@@ -357,3 +357,56 @@ async fn passes_the_inherited_effective_standing_for_each_request_to_the_admin_c
         &props["standingRequests"]["data"][0]["effective_standing"],
     );
 }
+
+/// FIXES.md, "Requests named the requester's corporation, not the one
+/// asked for".
+#[tokio::test]
+async fn names_a_request_by_its_subject_after_the_requester_moved() {
+    let mut app = TestApp::new().await;
+    let browser = admin(&mut app).await;
+    app.corporation(4001, Some("Asked Corp"), None, None).await;
+    app.corporation(4002, Some("New Corp"), None, None).await;
+    app.alliance(5001, Some("Asked Alliance"), None).await;
+    let requester = app
+        .character(NewCharacter {
+            name: Some("Mover"),
+            corporation_id: Some(4002),
+            ..NewCharacter::default()
+        })
+        .await;
+    for (kind, id) in [
+        ("corporation", 4001),
+        ("alliance", 5001),
+        ("corporation", 4003),
+    ] {
+        app.standing_request(NewRequest {
+            subject_type: Some(kind),
+            subject_id: Some(id),
+            requested_by: Some(requester),
+            ..NewRequest::default()
+        })
+        .await;
+    }
+
+    let props = app.page(&browser, "/admin/standing-requests").await.json();
+    let mut names: Vec<(i64, serde_json::Value)> = props["standingRequests"]["data"]
+        .as_array()
+        .expect("requests")
+        .iter()
+        .map(|request| {
+            (
+                request["subject"]["id"].as_i64().expect("an id"),
+                request["subject"]["name"].clone(),
+            )
+        })
+        .collect();
+    names.sort_by_key(|(id, _)| *id);
+    assert_eq!(
+        names,
+        vec![
+            (4001, json!("Asked Corp")),
+            (4003, json!(null)),
+            (5001, json!("Asked Alliance")),
+        ]
+    );
+}

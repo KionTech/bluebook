@@ -24,6 +24,8 @@
 //! - N7: the Discord webhook of the dataset points at the mock.
 //! - N8: the scenarios' MySQL statements run as their Postgres
 //!   equivalents (`translate_sql`).
+//! - N9: contact writes succeed (the reference's fakes answered 404,
+//!   which Laravel ignored).
 
 use std::path::PathBuf;
 
@@ -546,6 +548,10 @@ pub fn assert_rows_eq(expected: &Value, actual: &Value, app: &TestApp) {
 /// Sets up the mocks with a scenario's recorded fakes.
 pub fn configure_fakes(app: &TestApp, fakes: &Value) {
     app.esi.strict();
+    // N9: contact writes succeed. The reference's fakes answered them
+    // 404, which Laravel ignored; the ledger now records only writes that
+    // worked (FIXES.md, "The ledger recorded writes ESI refused").
+    app.esi.writes_succeed();
     for (line, answer) in fakes.as_object().into_iter().flatten() {
         let (method, url) = line.split_once(' ').expect("METHOD url");
         let status = answer["status"].as_u64().unwrap_or(200) as u16;

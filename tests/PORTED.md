@@ -192,7 +192,10 @@ Areas the PHP suite never covered:
 - `login`: the callback (session, redirects to the intended page, flash
   messages, tokens with their scopes, a new EVE account, failures).
 - `esi`, `esi_tokens`: headers, retries, pagination, chunks, the token
-  refresh and the token deletion rules.
+  refresh, and which failures delete a token, keep it marked failing, or
+  leave it alone (FIXES.md, "Tokens were thrown away on any failure").
+- `character_sync`: a failed read stops the sync, the ledger records only
+  writes that worked.
 - `jobs`: one try, failures kept, no job taken twice.
 - `scheduler`: wall clock alignment and the downtime window.
 - `sessions`: the session's lifetime, the same-origin check, guest forms.
@@ -201,6 +204,10 @@ Areas the PHP suite never covered:
 - `demo`: the demo login and seed.
 - `frontend/e2e/routes.spec.ts`, `seo.spec.ts`, `demo.spec.ts`: the route
   contract, heads and the demo in a browser.
-- `frontend/e2e/visual.spec.ts`: every page at desktop and phone width
-  against the Laravel page's screenshot (skipped in CI).
+- `frontend/e2e/ui.spec.ts`: the redesigned pages' flows (navigation, the
+  character menu, the re-login prompts, empty and error states, phone
+  width) and axe accessibility checks in light and dark.
+- `frontend/e2e/design.spec.ts`: screenshot baselines of the new design
+  (skipped in CI). The Laravel screenshot comparisons are gone with the
+  redesign (FIXES.md, "The redesigned pages").
 - vitest suites next to the frontend code.

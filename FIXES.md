@@ -286,6 +286,31 @@ the e2e suite uses.
 Tests: `demo::the_demo_login_is_off_by_default`,
 `demo::the_demo_login_signs_in_the_demo_pilot`.
 
+### The redesigned pages
+
+The pages were rebuilt on purpose rather than copied from Laravel's
+starter-kit sidebar layout, in the spirit of EVE's Photon UI:
+
+- a slim top bar with the logo, Standings and (for admins) Admin, and a
+  character menu (switch, add or remove a character, appearance, log out);
+- one column per page, with the heading and its primary actions on top;
+  the dashboard has the source, your characters (each with its sync
+  switch, or a prompt to log that character in again), the standings
+  table and your requests; Admin has tabs for Overview, Requests, Pilots
+  and Settings;
+- hard edges (no rounded corners), hairline borders, chamfered panels and
+  primary buttons, Barlow Condensed for headings and labels, monospace for
+  ids and times, one cyan accent, EVE's standing colours, amber warnings;
+- dark is the default theme when the viewer picked none (Laravel followed
+  the system); Light and System stay a choice.
+
+Every route, page title, prop and form is unchanged, and so is the API.
+The Laravel screenshot comparisons are replaced by flow, accessibility
+(axe, light and dark) and screenshot checks of the new design.
+
+Tests: `frontend/e2e/ui.spec.ts`, `frontend/e2e/design.spec.ts`, and the
+ported browser tests in `frontend/e2e`.
+
 ## Needs owner decision
 
 Kept as Laravel has it, listed for the owner:

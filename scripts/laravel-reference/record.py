@@ -43,7 +43,7 @@ APP = os.path.join(REF_DIR, "app")
 OUT = os.path.join(REPO, "tests/fixtures/golden")
 RUN = os.path.join(REPO, "scripts/laravel-reference/run.sh")
 DATASET = json.load(open(os.path.join(REPO, "tests/fixtures/dataset.json"), encoding="utf-8"))
-# RECORD_NOW (ISO 8601) pins the moment, for capture.mjs's screenshots.
+# RECORD_NOW (ISO 8601) pins the moment, so a re-recording matches the fixtures' times.
 NOW = (
     datetime.datetime.fromisoformat(os.environ["RECORD_NOW"].replace("Z", "+00:00"))
     if os.environ.get("RECORD_NOW")

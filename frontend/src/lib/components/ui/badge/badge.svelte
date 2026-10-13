@@ -8,8 +8,8 @@
         default: 'border-primary bg-primary/15 text-primary [a&]:hover:bg-primary/25',
         secondary:
           'border-border-strong bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/70',
-        destructive:
-          'border-destructive/60 bg-destructive/10 text-destructive [a&]:hover:bg-destructive/20',
+        destructive: 'tone-error',
+        warning: 'tone-warning',
         outline:
           'border-border-strong text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
       },

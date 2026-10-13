@@ -299,8 +299,13 @@ starter-kit sidebar layout, in the spirit of EVE's Photon UI:
   table and your requests; Admin has tabs for Overview, Requests, Pilots
   and Settings;
 - hard edges (no rounded corners), hairline borders, chamfered panels and
-  primary buttons, Barlow Condensed for headings and labels, monospace for
-  ids and times, one cyan accent, EVE's standing colours, amber warnings;
+  primary buttons whose cut edges take the panel's own border colour,
+  Barlow Condensed for headings and labels, monospace for ids and times,
+  one cyan accent, EVE's standing colours;
+- an opaque content column (the faint grid shows only beside it) and
+  solid panels; errors, warnings, notices and toasts are solid tinted
+  boxes in their own colour (red, amber, cyan, green) with matching text
+  and border;
 - dark is the default theme when the viewer picked none (Laravel followed
   the system); Light and System stay a choice.
 

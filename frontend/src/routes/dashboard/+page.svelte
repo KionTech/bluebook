@@ -290,7 +290,7 @@
           {#if state === 'reauth'}
             <div
               role="alert"
-              class="mt-3 flex flex-col gap-3 border border-warning-border bg-warning-soft px-3 py-2.5 text-sm shadow-[inset_3px_0_0_var(--warning)] sm:ml-13 sm:flex-row sm:items-center"
+              class="frame tone-warning tone-bar mt-3 flex flex-col gap-3 px-3 py-2.5 text-sm [--cut:8px] sm:ml-13 sm:flex-row sm:items-center"
             >
               <p class="flex-1">
                 <span class="font-medium">{character.name} needs to log in again.</span>
@@ -300,7 +300,7 @@
                 href={data.auth.sync_scopes_url}
                 data-sveltekit-reload
                 size="sm"
-                variant="outline"
+                variant="tone"
                 class="self-start sm:self-auto"
               >
                 <KeyRound />

@@ -1,9 +1,9 @@
 // The dashboard's standings list and request options: the order within a
 // standing, the search, and what an option's state is.
-import type { RequestOption, Standing } from '#lib/types.ts';
+import type { RequestOption, Standing } from "#lib/types.ts";
 
 /** Within a standing level, entity types come in this order. */
-const TYPE_ORDER = ['corporation', 'alliance', 'character', 'faction'];
+const TYPE_ORDER = ["corporation", "alliance", "character", "faction"];
 
 export function typeRank(type: string): number {
   const index = TYPE_ORDER.indexOf(type);
@@ -20,28 +20,45 @@ export function sortStandings(standings: Standing[]): Standing[] {
     (a, b) =>
       b.standing - a.standing ||
       typeRank(a.contact_type) - typeRank(b.contact_type) ||
-      label(a).localeCompare(label(b), undefined, { sensitivity: 'base' }),
+      label(a).localeCompare(label(b), undefined, { sensitivity: "base" }),
   );
 }
 
 /** The standings whose name contains the search, ignoring case. */
-export function filterStandings(standings: Standing[], search: string): Standing[] {
+export function filterStandings(
+  standings: Standing[],
+  search: string,
+): Standing[] {
   const query = search.trim().toLowerCase();
-  if (query === '') {
+  if (query === "") {
     return standings;
   }
-  return standings.filter((standing) => label(standing).toLowerCase().includes(query));
-}
-
-/** Whether the entity is already in the standings shown on the page. */
-export function hasStanding(option: RequestOption, standings: Standing[] | null): boolean {
-  return (standings ?? []).some(
-    (standing) => standing.contact_type === option.type && standing.contact_id === option.id,
+  return standings.filter((standing) =>
+    label(standing).toLowerCase().includes(query),
   );
 }
 
-export function canRequest(option: RequestOption, standings: Standing[] | null): boolean {
-  return !hasStanding(option, standings) && option.status !== 'pending' && option.status !== 'done';
+/** Whether the entity is already in the standings shown on the page. */
+export function hasStanding(
+  option: RequestOption,
+  standings: Standing[] | null,
+): boolean {
+  return (standings ?? []).some(
+    (standing) =>
+      standing.contact_type === option.type &&
+      standing.contact_id === option.id,
+  );
+}
+
+export function canRequest(
+  option: RequestOption,
+  standings: Standing[] | null,
+): boolean {
+  return (
+    !hasStanding(option, standings) &&
+    option.status !== "pending" &&
+    option.status !== "done"
+  );
 }
 
 export function optionStatusLabel(
@@ -49,16 +66,16 @@ export function optionStatusLabel(
   standings: Standing[] | null,
 ): string | null {
   if (hasStanding(option, standings)) {
-    return 'On the list';
+    return "On the list";
   }
-  if (option.status === 'pending') {
-    return 'Requested';
+  if (option.status === "pending") {
+    return "Requested";
   }
-  if (option.status === 'done') {
-    return 'Approved';
+  if (option.status === "done") {
+    return "Approved";
   }
-  if (option.status === 'rejected') {
-    return 'Rejected';
+  if (option.status === "rejected") {
+    return "Rejected";
   }
   return null;
 }
@@ -66,7 +83,7 @@ export function optionStatusLabel(
 /** The options the account already asked about, newest decision state
  * first: pending, then approved, then rejected. */
 export function requestedOptions(options: RequestOption[]): RequestOption[] {
-  const order = ['pending', 'done', 'rejected'];
+  const order = ["pending", "done", "rejected"];
   return options
     .filter((option) => option.status !== null && order.includes(option.status))
     .toSorted((a, b) => order.indexOf(a.status!) - order.indexOf(b.status!));

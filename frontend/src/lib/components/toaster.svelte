@@ -13,15 +13,10 @@
   import { toaster } from '#lib/toaster.svelte.ts';
 
   const icon = { success: CircleCheck, error: CircleX, info: Info };
-  const accent = {
-    success: 'text-success',
-    error: 'text-destructive',
-    info: 'text-primary',
-  };
-  const edge = {
-    success: 'shadow-[inset_3px_0_0_var(--success)]',
-    error: 'shadow-[inset_3px_0_0_var(--destructive)]',
-    info: 'shadow-[inset_3px_0_0_var(--primary)]',
+  const tone = {
+    success: 'tone-success',
+    error: 'tone-error',
+    info: 'tone-info',
   };
 
   // Every page load brings its own flash; showing it must not make the
@@ -40,16 +35,16 @@
     <div
       transition:fly={{ y: -6, duration: prefersReducedMotion.current ? 0 : 150 }}
       class={[
-        'pointer-events-auto flex w-full items-start gap-3 border border-border-strong bg-popover p-3',
-        edge[toast.type],
+        'frame tone-bar pointer-events-auto flex w-full items-start gap-3 p-3 [--cut:8px]',
+        tone[toast.type],
       ]}
       role="status"
     >
-      <Icon class={['mt-0.5 h-5 w-5 shrink-0', accent[toast.type]]} />
+      <Icon class="mt-0.5 h-5 w-5 shrink-0" />
       <p class="flex-1 text-sm">{toast.message}</p>
       <button
         type="button"
-        class="text-muted-foreground transition-colors hover:text-primary"
+        class="opacity-75 transition-opacity hover:opacity-100"
         aria-label="Dismiss"
         onclick={() => toaster.dismiss(toast.id)}
       >

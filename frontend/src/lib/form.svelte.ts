@@ -4,12 +4,12 @@
 // holds each field's message; a guest is sent to the login (`401` with
 // its URL, a full page load); anything else becomes an error toast. The
 // flash message arrives with the reloaded page.
-import { goto, refreshAll } from '$app/navigation';
+import { goto, refreshAll } from "$app/navigation";
 
-import { errorTitle } from '#lib/errors.ts';
-import { toaster } from '#lib/toaster.svelte.ts';
+import { errorTitle } from "#lib/errors.ts";
+import { toaster } from "#lib/toaster.svelte.ts";
 
-export type FormMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type FormMethod = "POST" | "PUT" | "PATCH" | "DELETE";
 
 /** What a form needs from SvelteKit, the browser and the toaster; tests
  * pass fakes. */
@@ -23,7 +23,11 @@ export type FormEnvironment = {
 
 export type SendResult = { ok: boolean; errors: Record<string, string> };
 
-type Body = { redirect?: string | null; errors?: Record<string, string>; message?: string };
+type Body = {
+  redirect?: string | null;
+  errors?: Record<string, string>;
+  message?: string;
+};
 
 function defaults(environment: Partial<FormEnvironment>): FormEnvironment {
   return {
@@ -33,7 +37,7 @@ function defaults(environment: Partial<FormEnvironment>): FormEnvironment {
     leave: (url) => {
       window.location.href = url;
     },
-    error: (message) => toaster.add('error', message),
+    error: (message) => toaster.add("error", message),
     ...environment,
   };
 }
@@ -50,7 +54,10 @@ export async function send(
   try {
     response = await env.fetch(url, {
       method,
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
       body: JSON.stringify(payload),
     });
   } catch {
@@ -70,7 +77,7 @@ export async function send(
     return { ok: false, errors: body.errors ?? {} };
   }
   if (response.status === 401) {
-    env.leave(body.redirect ?? '/eve');
+    env.leave(body.redirect ?? "/eve");
   } else {
     env.error(body.message ?? errorTitle(response.status));
   }

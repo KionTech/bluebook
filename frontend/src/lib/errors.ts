@@ -1,19 +1,19 @@
 // The titles of the error pages, the api's list (Laravel's minimal error
 // views).
 const TITLES: Record<number, string> = {
-  400: 'Bad Request',
-  401: 'Unauthorized',
-  402: 'Payment Required',
-  403: 'Forbidden',
-  404: 'Not Found',
-  405: 'Method Not Allowed',
-  419: 'Page Expired',
-  429: 'Too Many Requests',
-  503: 'Service Unavailable',
+  400: "Bad Request",
+  401: "Unauthorized",
+  402: "Payment Required",
+  403: "Forbidden",
+  404: "Not Found",
+  405: "Method Not Allowed",
+  419: "Page Expired",
+  429: "Too Many Requests",
+  503: "Service Unavailable",
 };
 
 export function errorTitle(status: number): string {
-  return TITLES[status] ?? 'Server Error';
+  return TITLES[status] ?? "Server Error";
 }
 
 /** What an error page shows: a 403 its own message (the gate's "This

@@ -6,20 +6,20 @@ export type NavItem = { title: string; href: string };
 /** The top bar's sections: Admin only for admins. */
 export function primarySections(isAdmin: boolean): NavItem[] {
   return [
-    { title: 'Standings', href: '/dashboard' },
-    ...(isAdmin ? [{ title: 'Admin', href: '/admin' }] : []),
+    { title: "Standings", href: "/dashboard" },
+    ...(isAdmin ? [{ title: "Admin", href: "/admin" }] : []),
   ];
 }
 
 export const ADMIN_SECTIONS: NavItem[] = [
-  { title: 'Overview', href: '/admin' },
-  { title: 'Requests', href: '/admin/standing-requests' },
-  { title: 'Pilots', href: '/admin/pilots' },
-  { title: 'Settings', href: '/admin/settings' },
+  { title: "Overview", href: "/admin" },
+  { title: "Requests", href: "/admin/standing-requests" },
+  { title: "Pilots", href: "/admin/pilots" },
+  { title: "Settings", href: "/admin/settings" },
 ];
 
 function trimSlash(path: string): string {
-  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+  return path.length > 1 ? path.replace(/\/+$/, "") : path;
 }
 
 /** Whether a top bar section covers the path, its own pages included. */

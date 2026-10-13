@@ -14,7 +14,7 @@
   } = $props();
 </script>
 
-<div class="inline-flex flex-wrap border border-border bg-card/60" role="group" aria-label={label}>
+<div class="inline-flex flex-wrap border border-border bg-card" role="group" aria-label={label}>
   {#each items as item (item.value)}
     <button
       type="button"

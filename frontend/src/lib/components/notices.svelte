@@ -23,18 +23,23 @@
     {#if sourceUnreadable}
       <div
         role="alert"
-        class="frame flex flex-col gap-3 border-destructive/60 bg-destructive/5 px-4 py-3 shadow-[inset_3px_0_0_var(--destructive)] sm:flex-row sm:items-center"
+        class="frame tone-error tone-bar flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
       >
-        <TriangleAlert class="size-5 shrink-0 text-destructive" />
+        <TriangleAlert class="size-5 shrink-0" />
         <div class="flex-1 text-sm">
-          <p class="label-caps text-destructive">The standings source cannot be read.</p>
-          <p class="text-muted-foreground">
+          <p class="label-caps">The standings source cannot be read.</p>
+          <p>
             No admin character can read it: its token is gone or it lacks the in-game role to see
             the contacts. Syncing is paused until the source's admin character logs in again or gets
             the role back.
           </p>
         </div>
-        <Button href={auth?.admin_scopes_url ?? undefined} data-sveltekit-reload size="sm">
+        <Button
+          href={auth?.admin_scopes_url ?? undefined}
+          data-sveltekit-reload
+          size="sm"
+          variant="tone"
+        >
           <KeyRound />
           Re-authenticate source
         </Button>
@@ -44,14 +49,14 @@
     {#if reauthCharacters.length > 0}
       <div
         role="alert"
-        class="frame flex flex-col gap-3 border-warning-border bg-warning-soft px-4 py-3 shadow-[inset_3px_0_0_var(--warning)] sm:flex-row sm:items-center"
+        class="frame tone-warning tone-bar flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
       >
-        <KeyRound class="size-5 shrink-0 text-warning" />
+        <KeyRound class="size-5 shrink-0" />
         <p class="flex-1 text-sm">
           <span class="font-medium">{reauthNames}</span>
           {reauthCharacters.length === 1 ? 'needs' : 'need'} to log in again before syncing can continue.
         </p>
-        <Button href={auth?.sync_scopes_url} data-sveltekit-reload size="sm" variant="outline">
+        <Button href={auth?.sync_scopes_url} data-sveltekit-reload size="sm" variant="tone">
           Log in again
         </Button>
       </div>

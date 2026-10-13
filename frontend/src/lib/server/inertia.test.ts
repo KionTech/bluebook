@@ -1,22 +1,24 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-import { inertiaReload } from './inertia.ts';
+import { inertiaReload } from "./inertia.ts";
 
-describe('inertiaReload', () => {
-  it('sends tabs left open on the Laravel site to a full reload', () => {
-    const url = new URL('https://bluebook.nicolaskion.dev/preise?x=1');
+describe("inertiaReload", () => {
+  it("sends tabs left open on the Laravel site to a full reload", () => {
+    const url = new URL("https://bluebook.nicolaskion.dev/preise?x=1");
     const response = inertiaReload(
-      new Request(url, { headers: { 'X-Inertia': 'true', 'X-Inertia-Version': 'abc' } }),
+      new Request(url, {
+        headers: { "X-Inertia": "true", "X-Inertia-Version": "abc" },
+      }),
       url,
     );
     expect(response?.status).toBe(409);
-    expect(response?.headers.get('X-Inertia-Location')).toBe(
-      'https://bluebook.nicolaskion.dev/preise?x=1',
+    expect(response?.headers.get("X-Inertia-Location")).toBe(
+      "https://bluebook.nicolaskion.dev/preise?x=1",
     );
   });
 
-  it('leaves ordinary requests alone', () => {
-    const url = new URL('https://bluebook.nicolaskion.dev/preise');
+  it("leaves ordinary requests alone", () => {
+    const url = new URL("https://bluebook.nicolaskion.dev/preise");
     expect(inertiaReload(new Request(url), url)).toBeNull();
   });
 });

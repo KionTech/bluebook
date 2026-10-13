@@ -147,7 +147,7 @@
     {#if !data.adminCharacter}
       <p
         role="alert"
-        class="mb-4 border border-destructive/60 bg-destructive/5 px-4 py-3 text-sm shadow-[inset_3px_0_0_var(--destructive)]"
+        class="frame tone-error tone-bar mb-4 px-4 py-3 text-sm [--cut:8px]"
       >
         Your active character could not be resolved.
       </p>
@@ -190,17 +190,17 @@
 
     {#if data.adminCharacter && !data.adminCharacter.has_mail_scope}
       <div
-        class="frame mt-6 flex flex-col gap-3 border-warning-border bg-warning-soft px-4 py-3 shadow-[inset_3px_0_0_var(--warning)] sm:flex-row sm:items-center"
+        class="frame tone-warning tone-bar mt-6 flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
       >
-        <Mail class="size-5 shrink-0 text-warning" />
+        <Mail class="size-5 shrink-0" />
         <p class="flex-1 text-sm">
           <span class="font-medium">In-game expiry mail is off.</span>
-          <span class="text-muted-foreground">
+          <span>
             Grant the mail permission so pilots whose tokens expired get an EVE mail asking them to
             log in again.
           </span>
         </p>
-        <Button href={data.grantMailScopeUrl} data-sveltekit-reload size="sm" variant="outline">
+        <Button href={data.grantMailScopeUrl} data-sveltekit-reload size="sm" variant="tone">
           Grant mail permission
         </Button>
       </div>

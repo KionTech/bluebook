@@ -2,7 +2,11 @@
 // pages).
 
 /** A corporation or alliance as the characters carry it. */
-export type EntitySummary = { id: number; name: string | null; ticker: string | null };
+export type EntitySummary = {
+  id: number;
+  name: string | null;
+  ticker: string | null;
+};
 
 /** `CharacterResource`. */
 export type Character = {
@@ -27,7 +31,11 @@ export type Auth = {
 };
 
 /** The flash message of the last form or login. */
-export type Flash = { success: string | null; error: string | null; info: string | null };
+export type Flash = {
+  success: string | null;
+  error: string | null;
+  info: string | null;
+};
 
 /** The props every page gets. */
 export type SharedProps = {
@@ -76,7 +84,11 @@ export type Standing = {
   contact_type: string;
   name: string | null;
   standing: number;
-  redundant_via: { contact_type: string; contact_id: number; name: string | null } | null;
+  redundant_via: {
+    contact_type: string;
+    contact_id: number;
+    name: string | null;
+  } | null;
 };
 
 /** A character of the dashboard, with its sync state. */
@@ -104,7 +116,7 @@ export type RequestOption = {
 /** The standing a request's subject already has. */
 export type EffectiveStanding = {
   standing: number;
-  source: 'direct' | 'corporation' | 'alliance';
+  source: "direct" | "corporation" | "alliance";
   via_type: string;
   via_id: number;
   via_name: string | null;
@@ -190,7 +202,11 @@ export type PilotsProps = SharedProps & {
 export type AdminSettingsProps = SharedProps & {
   source: SourceSummary | null;
   sourceTypes: SourceTypeOption[];
-  adminCharacter: { id: number; name: string | null; has_mail_scope: boolean } | null;
+  adminCharacter: {
+    id: number;
+    name: string | null;
+    has_mail_scope: boolean;
+  } | null;
   grantMailScopeUrl: string;
   contactsCount: number;
   discordSettings: { webhook_url: string | null; role_id: string | null };

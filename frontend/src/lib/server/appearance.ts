@@ -3,15 +3,15 @@
 // the right theme, as Laravel's HandleAppearance middleware did. Without
 // a choice the theme is dark.
 
-export type Appearance = 'light' | 'dark' | 'system';
+export type Appearance = "light" | "dark" | "system";
 
 export function appearanceOf(cookie: string | undefined): Appearance {
-  return cookie === 'light' || cookie === 'system' ? cookie : 'dark';
+  return cookie === "light" || cookie === "system" ? cookie : "dark";
 }
 
 /** Fills the `%appearance.*%` placeholders of app.html. */
 export function applyAppearance(html: string, appearance: Appearance): string {
   return html
-    .replace('%appearance.class%', appearance === 'dark' ? 'dark' : '')
-    .replace('%appearance.value%', appearance);
+    .replace("%appearance.class%", appearance === "dark" ? "dark" : "")
+    .replace("%appearance.value%", appearance);
 }

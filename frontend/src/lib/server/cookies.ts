@@ -10,46 +10,54 @@ export type CookieOptions = {
   expires?: Date;
   httpOnly?: boolean;
   secure?: boolean;
-  sameSite?: 'lax' | 'strict' | 'none';
+  sameSite?: "lax" | "strict" | "none";
 };
 
-export type ParsedCookie = { name: string; value: string; options: CookieOptions };
+export type ParsedCookie = {
+  name: string;
+  value: string;
+  options: CookieOptions;
+};
 
 /** One `Set-Cookie` header value; `null` when it has no name. */
 export function parseSetCookie(header: string): ParsedCookie | null {
-  const [pair, ...attributes] = header.split(';');
-  const separator = pair.indexOf('=');
+  const [pair, ...attributes] = header.split(";");
+  const separator = pair.indexOf("=");
   if (separator <= 0) {
     return null;
   }
   const name = pair.slice(0, separator).trim();
   const value = pair.slice(separator + 1).trim();
-  const options: CookieOptions = { path: '/' };
+  const options: CookieOptions = { path: "/" };
   for (const attribute of attributes) {
-    const [key, ...rest] = attribute.split('=');
-    const argument = rest.join('=').trim();
+    const [key, ...rest] = attribute.split("=");
+    const argument = rest.join("=").trim();
     switch (key.trim().toLowerCase()) {
-      case 'path':
-        options.path = argument || '/';
+      case "path":
+        options.path = argument || "/";
         break;
-      case 'domain':
+      case "domain":
         options.domain = argument;
         break;
-      case 'max-age':
+      case "max-age":
         options.maxAge = Number(argument);
         break;
-      case 'expires':
+      case "expires":
         options.expires = new Date(argument);
         break;
-      case 'httponly':
+      case "httponly":
         options.httpOnly = true;
         break;
-      case 'secure':
+      case "secure":
         options.secure = true;
         break;
-      case 'samesite': {
+      case "samesite": {
         const sameSite = argument.toLowerCase();
-        if (sameSite === 'lax' || sameSite === 'strict' || sameSite === 'none') {
+        if (
+          sameSite === "lax" ||
+          sameSite === "strict" ||
+          sameSite === "none"
+        ) {
           options.sameSite = sameSite;
         }
         break;

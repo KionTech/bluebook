@@ -4,18 +4,18 @@
   colours and amber warnings. Dark first; the light theme speaks the same
   language. Fonts are self-hosted (fontsource), no external requests.
 */
-@import '@fontsource/barlow/400.css';
-@import '@fontsource/barlow/500.css';
-@import '@fontsource/barlow/600.css';
-@import '@fontsource/barlow-condensed/500.css';
-@import '@fontsource/barlow-condensed/600.css';
-@import '@fontsource/barlow-condensed/700.css';
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/500.css';
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow-condensed/500.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
 
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@import 'tw-animate-css';
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -32,9 +32,10 @@
 }
 
 @theme inline {
-  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    "Barlow Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -114,7 +115,21 @@
   --standing-neutral: hsl(210 10% 36%);
   --standing-bad: hsl(24 100% 32%);
   --standing-terrible: hsl(0 78% 40%);
-  --standing-own: hsl(140 70% 26%);
+  --standing-own: hsl(140 75% 21%);
+
+  /* Tinted banners: solid background, text and border in one colour. */
+  --error-bg: hsl(0 85% 95%);
+  --error-fg: hsl(0 75% 30%);
+  --error-border: hsl(0 65% 55%);
+  --warning-bg: hsl(42 95% 92%);
+  --warning-fg: hsl(30 100% 22%);
+  --warning-edge: hsl(36 85% 45%);
+  --info-bg: hsl(188 65% 92%);
+  --info-fg: hsl(190 100% 18%);
+  --info-border: hsl(189 70% 38%);
+  --success-bg: hsl(145 55% 92%);
+  --success-fg: hsl(150 80% 18%);
+  --success-border: hsl(150 50% 40%);
 
   color-scheme: light;
 }
@@ -155,6 +170,19 @@
   --standing-terrible: hsl(2 95% 66%);
   --standing-own: hsl(140 65% 55%);
 
+  --error-bg: hsl(0 55% 11%);
+  --error-fg: hsl(2 100% 80%);
+  --error-border: hsl(2 70% 48%);
+  --warning-bg: hsl(36 70% 9%);
+  --warning-fg: hsl(42 100% 68%);
+  --warning-edge: hsl(38 85% 42%);
+  --info-bg: hsl(190 60% 9%);
+  --info-fg: hsl(186 90% 72%);
+  --info-border: hsl(186 70% 36%);
+  --success-bg: hsl(150 45% 8%);
+  --success-fg: hsl(148 70% 66%);
+  --success-border: hsl(150 55% 34%);
+
   color-scheme: dark;
 }
 
@@ -169,9 +197,14 @@
 
   body {
     @apply bg-background text-foreground;
-    /* A faint grid, and a cold glow from the top. */
+    /* A faint grid and a cold glow from the top, seen only beside the
+       content column, which is opaque. */
     background-image:
-      radial-gradient(ellipse 80% 40% at 50% -10%, var(--glow), transparent 70%),
+      radial-gradient(
+        ellipse 80% 40% at 50% -10%,
+        var(--glow),
+        transparent 70%
+      ),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size:
@@ -202,12 +235,15 @@
 
 @layer components {
   /* A panel with two chamfered corners (top right, bottom left); the
-     diagonals are drawn so the hairline frame stays closed. */
+     diagonals are drawn in the panel's own border colour (`--edge`) so
+     the hairline frame stays closed. Change the colour through `--edge`
+     (or a tone class), never a border utility. */
   .frame {
     --cut: 12px;
+    --edge: var(--border);
     position: relative;
     background-color: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--edge);
     clip-path: polygon(
       0 0,
       calc(100% - var(--cut)) 0,
@@ -220,7 +256,7 @@
 
   .frame::before,
   .frame::after {
-    content: '';
+    content: "";
     position: absolute;
     width: var(--cut);
     height: var(--cut);
@@ -228,8 +264,8 @@
     background: linear-gradient(
       to bottom left,
       transparent calc(50% - 0.75px),
-      var(--border-strong) calc(50% - 0.75px),
-      var(--border-strong) calc(50% + 0.75px),
+      var(--edge) calc(50% - 0.75px),
+      var(--edge) calc(50% + 0.75px),
       transparent calc(50% + 0.75px)
     );
   }
@@ -243,6 +279,47 @@
     bottom: -1px;
     left: -1px;
     transform: rotate(180deg);
+  }
+
+  /* Tones of banners, prompts, toasts and badges: a solid tinted
+     background with text, border, cut edges and the left bar in the
+     same colour. */
+  .tone-error,
+  .tone-warning,
+  .tone-info,
+  .tone-success {
+    border: 1px solid var(--edge);
+    background-color: var(--tone-bg);
+    color: var(--tone-fg);
+  }
+
+  .tone-error {
+    --edge: var(--error-border);
+    --tone-bg: var(--error-bg);
+    --tone-fg: var(--error-fg);
+  }
+
+  .tone-warning {
+    --edge: var(--warning-edge);
+    --tone-bg: var(--warning-bg);
+    --tone-fg: var(--warning-fg);
+  }
+
+  .tone-info {
+    --edge: var(--info-border);
+    --tone-bg: var(--info-bg);
+    --tone-fg: var(--info-fg);
+  }
+
+  .tone-success {
+    --edge: var(--success-border);
+    --tone-bg: var(--success-bg);
+    --tone-fg: var(--success-fg);
+  }
+
+  /* The bar on the left edge of a toned banner. */
+  .tone-bar {
+    box-shadow: inset 3px 0 0 var(--edge);
   }
 
   /* Primary buttons: cut top left and bottom right. The outline would be
@@ -282,7 +359,7 @@
   .bracketed::after {
     --b: var(--border-strong);
     --l: 5px;
-    content: '';
+    content: "";
     position: absolute;
     inset: -3px;
     pointer-events: none;

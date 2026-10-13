@@ -5,11 +5,11 @@
  * those tabs land on the SvelteKit page instead of breaking.
  */
 export function inertiaReload(request: Request, url: URL): Response | null {
-  if (request.headers.get('x-inertia') === null) {
+  if (request.headers.get("x-inertia") === null) {
     return null;
   }
   return new Response(null, {
     status: 409,
-    headers: { 'X-Inertia-Location': url.href },
+    headers: { "X-Inertia-Location": url.href },
   });
 }

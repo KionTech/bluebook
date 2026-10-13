@@ -36,7 +36,7 @@
         'label-caps flex flex-col items-center gap-2 border px-3 py-4 text-xs transition-[background-color,border-color,box-shadow]',
         appearance === value
           ? 'border-primary bg-primary/10 text-primary shadow-[0_0_14px_var(--glow)]'
-          : 'bg-card/60 text-muted-foreground hover:border-border-strong hover:text-foreground',
+          : 'bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
       ]}
     >
       <Icon class="size-5" />

@@ -1,13 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { POLL_INTERVAL_MS, startPolling } from './poll.ts';
+import { POLL_INTERVAL_MS, startPolling } from "./poll.ts";
 
-describe('startPolling', () => {
+describe("startPolling", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('reloads every interval while the tab is visible, until stopped', () => {
+  it("reloads every interval while the tab is visible, until stopped", () => {
     vi.useFakeTimers();
     let visible = true;
     const reload = vi.fn();

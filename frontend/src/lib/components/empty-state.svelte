@@ -10,7 +10,7 @@
   }: { title: string; icon?: Component<{ class?: string }>; children?: Snippet } = $props();
 </script>
 
-<div class="frame flex flex-col items-center gap-2 bg-card/50 px-6 py-10 text-center">
+<div class="frame flex flex-col items-center gap-2 px-6 py-10 text-center">
   {#if Icon}
     <Icon class="size-5 text-primary" />
   {:else}

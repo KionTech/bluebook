@@ -2,11 +2,11 @@
 // their arrows decoded.
 
 export function linkLabel(label: string): string {
-  return label.replace('&laquo;', '«').replace('&raquo;', '»');
+  return label.replace("&laquo;", "«").replace("&raquo;", "»");
 }
 
 /** A paginator URL as a path on the site, so SvelteKit navigates to it. */
 export function sitePath(url: string): string {
-  const parsed = new URL(url, 'http://site.invalid');
+  const parsed = new URL(url, "http://site.invalid");
   return `${parsed.pathname}${parsed.search}`;
 }

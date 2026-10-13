@@ -12,9 +12,11 @@
         destructive:
           'chamfer bg-destructive text-destructive-foreground hover:brightness-110 hover:shadow-[inset_0_0_14px_rgb(255_255_255/0.3)]',
         outline:
-          'border border-border-strong bg-card/60 text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary hover:shadow-[0_0_14px_var(--glow)]',
+          'border border-border-strong bg-card text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary hover:shadow-[0_0_14px_var(--glow)]',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/70',
         ghost: 'text-foreground hover:bg-primary/10 hover:text-primary',
+        // Inside a toned banner (`tone-*`): the banner's own colour.
+        tone: 'border border-(--edge) bg-(--tone-bg) text-(--tone-fg) hover:brightness-125 hover:shadow-[0_0_12px_var(--edge)]',
         link: 'text-primary underline-offset-4 hover:underline normal-case tracking-normal font-sans',
       },
       size: {

@@ -1,19 +1,21 @@
 // The toasts: the flash messages a page arrives with (success, error,
 // info), and the errors of a refused form, each shown for four seconds or
 // until dismissed, like Laravel's Toaster.vue.
-import type { Flash } from '#lib/types.ts';
+import type { Flash } from "#lib/types.ts";
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = "success" | "error" | "info";
 export type Toast = { id: number; type: ToastType; message: string };
 
 export const DURATION_MS = 4000;
 
 /** The messages of a flash, in Toaster.vue's order. */
-export function flashMessages(flash: Flash | null | undefined): [ToastType, string][] {
+export function flashMessages(
+  flash: Flash | null | undefined,
+): [ToastType, string][] {
   if (!flash) {
     return [];
   }
-  return (['success', 'error', 'info'] as const)
+  return (["success", "error", "info"] as const)
     .filter((type) => flash[type])
     .map((type) => [type, flash[type] as string]);
 }

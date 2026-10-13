@@ -55,7 +55,7 @@
       <li>
         <a
           href={stat.href}
-          class="frame flex h-full flex-col gap-1 px-4 py-4 transition-colors hover:border-primary hover:bg-primary/8"
+          class="frame flex h-full flex-col gap-1 px-4 py-4 transition-colors hover:bg-accent hover:[--edge:var(--primary)]"
         >
           <span
             class={[

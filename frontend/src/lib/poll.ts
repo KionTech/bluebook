@@ -3,7 +3,7 @@
 export function startPolling(
   reload: () => unknown,
   intervalMs: number,
-  isVisible: () => boolean = () => document.visibilityState === 'visible',
+  isVisible: () => boolean = () => document.visibilityState === "visible",
 ): () => void {
   const timer = setInterval(() => {
     if (isVisible()) {
